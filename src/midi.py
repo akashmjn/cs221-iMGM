@@ -100,3 +100,11 @@ def matrix_to_midi(matrix, out_midi_path, instrument_name="Cello", note_length =
 
   midi_data.instruments.append(track)
   midi_data.write(out_midi_path)
+
+'''
+A demo is commented here for example usage.
+
+def demo():
+  answer = midi_to_matrix('data/example.mid')
+  matrix_to_midi(answer, 'data/output.mid')
+'''
