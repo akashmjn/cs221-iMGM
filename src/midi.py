@@ -54,6 +54,7 @@ def midi_to_matrix(midi_path, join_chords = True):
   return input_matrix
 
 '''
+Helper function.
 Creates a one-hot 1D np array of the note passed in.
 
 @param note_data -> instance of pretty_midi.Note
