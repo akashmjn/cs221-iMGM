@@ -9,46 +9,55 @@ Takes a MIDI file, and converts one of the tracks in the file
   to the matrix specified below.
 
 @param midi_path -> path to midi file to convert
+@param join_tracks -> 
+  takes all tracks and combines the tracks into one track, so chords
+  are represented across instruments
 @param join_chords ->
   if true, makes the one hot np sub-arrays represent chords with multiple ones
   if false, assumes each note happens independent of chords and returns one-hot vectors
+@param no_drums ->
+  allows the user to exclude drum tracks from the matrix of output notes
 
-@return an array of size (num_chords_in_MIDI_track x NUM_POSSIBLE_NOTES)
+@return a numpy matrix of shape (num_chords_in_MIDI_track x NUM_POSSIBLE_NOTES)
 '''
-def midi_to_matrix(midi_path, join_chords = True):
+def midi_to_matrix(midi_path, join_tracks = True, join_chords = True, no_drums = False):
   # get data from midi file
   midi_data = pretty_midi.PrettyMIDI(midi_path)
   
   # pick the instrument that is not a drum that has the most notes
-  non_drum_tracks = filter(lambda i: not i.is_drum, midi_data.instruments)
+  non_drum_tracks = map(lambda i: i.notes, filter(lambda i: no_drums and not i.is_drum, midi_data.instruments))
   if not non_drum_tracks:
     raise Exception("midi file does not contain any non-drum tracks:\n\t %s" % midi_path)
-  track = max(non_drum_tracks, key=lambda i:len(i.notes))
+
+  if join_tracks:
+    notes = sum(non_drum_tracks, [])
+    notes.sort(key=lambda note: note.start)
+  else:
+    notes = max(non_drum_tracks, key=lambda i:len(i.notes)).notes
 
   if not join_chords:
-    return np.array([note_2_vec(note.pitch) for note in track.notes], np.int32)
+    return np.array([note_2_vec(note.pitch) for note in notes], np.int32)
 
   '''
   The rest of this code is now for merging chords in vectors.
   '''
-  epsilon = 1e-3
+  epsilon = 0.01
   chord_notes_counted = 0
 
   # make a matrix assuming no chords
-  input_matrix = np.zeros((len(track.notes), NUM_POSSIBLE_NOTES), np.int32)
+  input_matrix = np.zeros((len(notes), NUM_POSSIBLE_NOTES), np.int32)
 
-  # assuming the last note is not in a chord with the first note
-  for note_index, note_data in enumerate(track.notes):
+  # fill in matrix with chord information
+  for note_index, note_data in enumerate(notes):
+    current_note_index = note_index - chord_notes_counted
 
     # non-chord case
     if note_index == 0 or abs(previous_note_data.start - note_data.start) > epsilon:
-      input_matrix[note_index - chord_notes_counted] = note_2_vec(note_data)
+      input_matrix[current_note_index] = note_2_vec(note_data)
+      previous_note_data = note_data
     else: # chord case
+      input_matrix[current_note_index] = note_2_vec(note_data, input_matrix[current_note_index - 1])
       chord_notes_counted += 1
-      input_matrix[note_index - chord_notes_counted] = \
-        note_2_vec(note_data, input_matrix[note_index - chord_notes_counted])
-
-    previous_note_data = track.notes[note_index - chord_notes_counted]
 
   input_matrix = input_matrix[:input_matrix.shape[0] - chord_notes_counted]
   return input_matrix
@@ -79,7 +88,7 @@ The output of the file has no temporal knowledge of notes besides chords so
 This function has no return value and puts the matrix 
   as a MIDI file in the path specified.
 
-@param matrix -> input note matrix of shape (time_steps x NUM_POSSIBLE_NOTES)
+@param matrix -> input note numpy matrix of shape (time_steps x NUM_POSSIBLE_NOTES)
 @param out_midi_path -> where to output the MIDI file
 @param instrument_name -> instrument used in one-track MIDI output
 @param note_length -> length of each note in output
@@ -108,3 +117,7 @@ def demo():
   answer = midi_to_matrix('data/example.mid')
   matrix_to_midi(answer, 'data/output.mid')
 '''
+def demo():
+  answer = midi_to_matrix('data/example.mid')
+  matrix_to_midi(answer, 'data/output.mid')
+demo()
