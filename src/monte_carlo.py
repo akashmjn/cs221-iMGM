@@ -40,7 +40,7 @@ class MonteCarlo:
             self.update_transition_counts(midi_matrix)
         self.get_transition_probabilities()
     
-    def generate_music(self, note1=None, num_notes=100, output_path):
+    def generate_music(self, output_path, note1=None, num_notes=100):
         '''
         Generate "music (:P)" from a starting note. If no starting note is given,
         pick a random note in the middle octave and start from there. Use a note
