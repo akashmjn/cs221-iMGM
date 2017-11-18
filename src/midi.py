@@ -171,3 +171,30 @@ def matrix_to_midi(matrix, out_midi_path, instrument_name = "Cello", note_length
 
     midi_data.instruments.append(track)
     midi_data.write(out_midi_path)
+
+
+###################################################################################################
+
+def midi_to_matrix_quantized(midi_path, join_chords = False):
+    try:
+        midi_data = pretty_midi.PrettyMIDI(midi_path)
+    except:
+        print ("Error processing file, MIDI output path: %s" % output_file_path)
+        return None
+    # get data from MIDI file
+
+    # get the instruments that are not drums (if option is selected)
+    note_list = map(lambda i: i.notes, midi_data.instruments)
+
+    # pick the track with the most notes
+    notes = max(note_list, key=lambda notes:len(notes))
+    
+    # Get a list of time deltas for every note. Choose the lowest delta to be a quarter note
+    times = [note.end-note.start for note in notes]
+    min_t = min(times)
+    
+    new_notes = []
+    for i,note in enumerate(notes):
+        new_notes.extend([note]*int(times[i]/min_t))
+
+    return np.array([note_2_vec(note.pitch) for note in new_notes], np.int32)

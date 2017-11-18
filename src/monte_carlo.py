@@ -3,7 +3,7 @@ import numpy as np
 import random
 
 from collections import defaultdict
-from midi import midi_to_matrix, matrix_to_midi
+from midi import midi_to_matrix, matrix_to_midi, midi_to_matrix_quantized
 
 ###############################################################################
 
@@ -19,6 +19,7 @@ class MonteCarlo:
     
     def read_midi(self, path):
         midi_matrix = midi_to_matrix(path, join_chords=False)
+        # midi_matrix = midi_to_matrix_quantized(path, join_chords=False)
         return midi_matrix
     
     def update_transition_counts(self, midi_matrix):
@@ -37,10 +38,13 @@ class MonteCarlo:
         train_files = glob.glob(self.FOLDER + '*.mid')
         for path in train_files:
             midi_matrix = self.read_midi(path)
-            self.update_transition_counts(midi_matrix)
+            if midi_matrix is None:
+                continue
+            else:
+                self.update_transition_counts(midi_matrix)
         self.get_transition_probabilities()
     
-    def generate_music(self, output_path, note1=None, num_notes=100):
+    def generate_melody(self, output_path, note1=None, num_notes=100):
         '''
         Generate "music (:P)" from a starting note. If no starting note is given,
         pick a random note in the middle octave and start from there. Use a note
@@ -73,7 +77,13 @@ class MonteCarlo:
             one_hot[val] = 1
             kickass_melody.append(one_hot)
         kickass_melody = np.vstack(kickass_melody)
-        
+        return kickass_melody
+    
+    def output_midi(self, kickass_melody):
         matrix_to_midi(matrix=kickass_melody, out_midi_path=output_path)
+    
+    def get_sample_music(self, output_path, note1=None, num_notes=100):
+        kickass_melody = self.generate_melody(output_path=output_path, note1=note1, num_notes=num_notes)
+        self.output_midi(kickass_melody)
 
 ################################################################################
