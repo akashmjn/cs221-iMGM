@@ -63,12 +63,15 @@ class MonteCarlo:
         
         # Time to generate some shit!
         generated_notes = [state]
-        for _ in range(num_notes):
+        count = 0
+        while count < num_notes:
             potential_new_states = [key[1] for key in self.T if key[0]==state]
             prob_distribution = [self.T[(state, new_state)] for new_state in potential_new_states]
             next_state = np.random.choice(potential_new_states, p=prob_distribution)
-            generated_notes.append(next_state)
-            state = next_state
+            if abs(next_state - state) < 12:
+                generated_notes.append(next_state)
+                count += 1
+                state = next_state
         
         # Make the generated shit into one-hot vectors
         kickass_melody = []
