@@ -44,7 +44,7 @@ class MonteCarlo:
                 self.update_transition_counts(midi_matrix)
         self.get_transition_probabilities()
     
-    def generate_melody(self, note1=None, num_notes=100):
+    def generate_melody(self, note1=None, num_notes=100, flag='restrict'):
         '''
         Generate "music (:P)" from a starting note. If no starting note is given,
         pick a random note in the middle octave and start from there. Use a note
@@ -63,14 +63,22 @@ class MonteCarlo:
         
         # Time to generate some shit!
         generated_notes = [state]
-        count = 0
-        while count < num_notes:
-            potential_new_states = [key[1] for key in self.T if key[0]==state]
-            prob_distribution = [self.T[(state, new_state)] for new_state in potential_new_states]
-            next_state = np.random.choice(potential_new_states, p=prob_distribution)
-            if abs(next_state - state) < 12:
+        if flag == 'restrict':
+            count = 0
+            while count < num_notes:
+                potential_new_states = [key[1] for key in self.T if key[0]==state]
+                prob_distribution = [self.T[(state, new_state)] for new_state in potential_new_states]
+                next_state = np.random.choice(potential_new_states, p=prob_distribution)
+                if abs(next_state - state) < 12:
+                    generated_notes.append(next_state)
+                    count += 1
+                    state = next_state
+        else:
+            for _ in range(num_notes):
+                potential_new_states = [key[1] for key in self.T if key[0]==state]
+                prob_distribution = [self.T[(state, new_state)] for new_state in potential_new_states]
+                next_state = np.random.choice(potential_new_states, p=prob_distribution)
                 generated_notes.append(next_state)
-                count += 1
                 state = next_state
         
         # Make the generated shit into one-hot vectors
