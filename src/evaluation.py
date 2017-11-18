@@ -104,6 +104,7 @@ class MelodyEvaluator(object):
         intervals.
         """
         self.eval_stats['interval_stats'] = defaultdict(int) 
+        self.eval_stats['raw_intervals'] = defaultdict(int)
 
         nIntervalJumps = 0
         for i in range(1,melody_matrix.shape[0]):
@@ -116,6 +117,11 @@ class MelodyEvaluator(object):
             if currNoteVec[currNote]==0 or prevNoteVec[prevNote]==0 or interval == 0:
                 continue
             else: nIntervalJumps += 1
+
+            # update the stats of raw intervals
+            self.eval_stats['raw_intervals'][interval] += 1
+
+            # update stats for commonly used intervals
     
             # not using magenta special intervals for now (not sure what they mean)
             # if interval == REST_INTERVAL:
@@ -140,10 +146,12 @@ class MelodyEvaluator(object):
             elif interval == SEVENTH:
                 self.eval_stats['interval_stats']['num_sevenths'] += 1
 
-        # Expressing as % of total jumps made
+        # Normalizing as % of total jumps made
         # pdb.set_trace()
         for key,value in self.eval_stats['interval_stats'].items():
             self.eval_stats['interval_stats'][key] = value/nIntervalJumps
+        for key,value in self.eval_stats['raw_intervals'].items():
+            self.eval_stats['raw_intervals'][key] = value/nIntervalJumps
 
     ### Chord-based evaluation scores ###
 
