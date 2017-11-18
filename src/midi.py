@@ -83,12 +83,16 @@ Takes a MIDI file, and converts one of the tracks in the file
 @return a numpy matrix of shape (num_chords_in_MIDI_track x NUM_POSSIBLE_NOTES), None if some error
 '''
 def midi_to_matrix(midi_path, join_chords = True):
+    # get data from MIDI file
     try:
         midi_data = pretty_midi.PrettyMIDI(midi_path)
     except:
         print ("Error processing file, MIDI output path: %s" % midi_path)
         return None
-    # get data from MIDI file
+
+    # get piano roll
+    tempo = midi_data.estimate_tempo()
+    piano_roll = midi_data.get_piano_roll(fs=tempo)
 
     # get the instruments that are not drums (if option is selected)
     note_list = map(lambda i: i.notes, midi_data.instruments)
@@ -175,7 +179,7 @@ def matrix_to_midi(matrix, out_midi_path, instrument_name = "Cello", note_length
 
 ###################################################################################################
 
-def midi_to_matrix_quantized(midi_path, join_chords = False):
+def midi_to_matrix_quantized(midi_path, join_chords = False, use_min_t = False):
     try:
         midi_data = pretty_midi.PrettyMIDI(midi_path)
     except:
@@ -189,12 +193,16 @@ def midi_to_matrix_quantized(midi_path, join_chords = False):
     # pick the track with the most notes
     notes = max(note_list, key=lambda notes:len(notes))
     
-    # Get a list of time deltas for every note. Choose the lowest delta to be a quarter note
-    times = [note.end-note.start for note in notes]
-    min_t = min(times)
-    
+    if use_min_t: # Get a list of time deltas for every note. Choose the lowest delta to be a quarter note
+        times = [note.end-note.start for note in notes]
+        beat_length = min(times)
+    else: # calculate average time of one beat in song
+        song_length = midi_data.get_end_time()
+        num_beats = midi_data.estimate_tempo() * 60
+        beat_length = song_length / num_beats
+
     new_notes = []
     for i,note in enumerate(notes):
-        new_notes.extend([note]*int(times[i]/min_t))
+        new_notes.extend([note]*int(times[i]/beat_length))
 
     return np.array([note_2_vec(note.pitch) for note in new_notes], np.int32)
