@@ -15,7 +15,7 @@ class PinkNoise:
         self.prob = [p/sump for p in probabilities]
         self.notes = list(range(48,84))
     
-    def generate(self, output_path):
+    def generate_melody(self):
         notes = []
         for _ in range(self.n):
             note = np.random.choice(self.notes, p=self.prob)
@@ -23,6 +23,13 @@ class PinkNoise:
             row[note] = 1
             notes.append(row)
         notes = np.vstack(notes)
+        return notes
+    
+    def output_midi(self, notes, output_path):
         matrix_to_midi(matrix=notes, out_midi_path=output_path)
+    
+    def get_sample_music(self, output_path):
+        notes = self.generate_melody()
+        self.output_midi(notes=notes, output_path=output_path)
 
 ###############################################################################

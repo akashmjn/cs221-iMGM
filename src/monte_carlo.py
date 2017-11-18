@@ -44,7 +44,7 @@ class MonteCarlo:
                 self.update_transition_counts(midi_matrix)
         self.get_transition_probabilities()
     
-    def generate_melody(self, output_path, note1=None, num_notes=100):
+    def generate_melody(self, note1=None, num_notes=100):
         '''
         Generate "music (:P)" from a starting note. If no starting note is given,
         pick a random note in the middle octave and start from there. Use a note
@@ -79,11 +79,11 @@ class MonteCarlo:
         kickass_melody = np.vstack(kickass_melody)
         return kickass_melody
     
-    def output_midi(self, kickass_melody):
+    def output_midi(self, kickass_melody, output_path):
         matrix_to_midi(matrix=kickass_melody, out_midi_path=output_path)
     
     def get_sample_music(self, output_path, note1=None, num_notes=100):
-        kickass_melody = self.generate_melody(output_path=output_path, note1=note1, num_notes=num_notes)
-        self.output_midi(kickass_melody)
+        kickass_melody = self.generate_melody(note1=note1, num_notes=num_notes)
+        self.output_midi(kickass_melody, output_path)
 
 ################################################################################
