@@ -32,11 +32,16 @@ def merge_many_tracks(input_dir, output_dir, recursive = True, merged_filename_l
             if f.endswith(".mid"):
                 input_file_path = os.path.join(input_dir, f)
                 output_file_path = os.path.join(output_dir, str(num_tracks) + "_" + f[:-4] + "_" + merged_filename_label + ".mid")
-                merge_tracks(input_file_path, output_file_path, out_instrument_name, include_drums)
-                num_tracks += 1
+                try:
+                    merge_tracks(input_file_path, output_file_path, out_instrument_name, include_drums)
+                    num_tracks += 1
+                    print ("merged successfully, MIDI output path: %s" % output_file_path)
+                except:
+                    print ("FAILURE: merging failed on following MIDI input path: %s" % input_file_path)
         if recursive:
             for next_dirname in dirs:
-                num_tracks += merge_many_tracks(os.path.join(input_dir, next_dirname), output_dir, out_instrument_name, include_drums)
+                num_tracks += merge_many_tracks(os.path.join(input_dir, next_dirname), output_dir, \
+                    recursive, merged_filename_label, out_instrument_name, include_drums, num_tracks)
 
     return num_tracks
 
@@ -163,3 +168,5 @@ def matrix_to_midi(matrix, out_midi_path, instrument_name = "Cello", note_length
 
     midi_data.instruments.append(track)
     midi_data.write(out_midi_path)
+
+merge_many_tracks('data/raw/', 'data/merged/')
