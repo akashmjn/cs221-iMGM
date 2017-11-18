@@ -47,41 +47,48 @@ LEAP_DOUBLED = -1
 
 class MelodyEvaluator(object):
     # Holds a dict object with stats after evaluating a melody
-    def __init__(self):
+    # @param root: MIDI int representation of root note, used to calculate major scale  
+    def __init__(self,root):
+        self.root = root
         self.eval_stats = defaultdict(float)
         self.MAJOR_PATTERN = [2,2,1,2,2,2,1]
+
+    def evaluate_melody(self,melody_matrix):
+        self.eval_in_key_stat(melody_matrix)
+        self.eval_interval_stat(melody_matrix)
 
     """
     Computes a score of fraction of notes played in key
     @param melody_matrix: assumed to be matrix of one-hot vectors (nx128)
     @param root: MIDI int representation of root note, used to calculate major scale  
     """
-    def eval_in_key_stat(self,melody_matrix,root,nOctaves=1):
-        # it
+    def eval_in_key_stat(self,melody_matrix,nOctaves=1):
+        # number of valid notes encountered 
         numNotes = 0
-        scale = self.compute_scale(root,nOctaves)
+        scale = self.compute_scale(nOctaves)
+        # pdb.set_trace()
         for i in range(melody_matrix.shape[0]):
-            noteVec = melody[i,:]
+            noteVec = melody_matrix[i,:]
             noteIdx = np.argmax(noteVec)
-            # not a blank note, and check if note in scale
-            if noteVec[noteIdx]!=0 and noteIdx in scale:
-                self.eval_stats['frac_notes_in_key'] += 1
+            # not a blank note, update total count 
+            if noteVec[noteIdx]!=0:
                 numNotes += 1
+
+            if noteIdx in scale:
+                self.eval_stats['frac_notes_in_key'] += 1
         self.eval_stats['frac_notes_in_key'] /= numNotes
 
-
-    def compute_scale(self,root,nOctaves,type='major'):
+    def compute_scale(self,nOctaves,type='major'):
         """
         Returns a list with MIDI int notes for scale starting at root
         NOTE: currently by default uses major, can add more patterns if we want
-        @param root: MIDI int representation of root note, used to calculate major scale  
         @param nOctaves: int total spread of Octaves required on either side i.e. for nOctaves=1 root-12 : root+12
         """       
         scale = set() 
         if type=='major':
             pattern = self.MAJOR_PATTERN*nOctaves*2
             # get lowest note, iterate len(pattern)*nOctaves*2 times
-            currNote = root-nOctaves*OCTAVE
+            currNote = self.root-nOctaves*OCTAVE
             scale.add(currNote)
             # pdb.set_trace()
             for i in range(len(pattern)):
@@ -90,12 +97,12 @@ class MelodyEvaluator(object):
         return scale
 
     def eval_interval_stat(self, melody_matrix):
-      """
-      Computes the melodic interval just played and adds it to a stat dict.
-    
-      A dictionary of composition statistics with fields updated to include new
-      intervals.
-      """
+        """
+        Computes the melodic interval just played and adds it to a stat dict.
+
+        A dictionary of composition statistics with fields updated to include new
+        intervals.
+        """
         interval_stats = defaultdict(int) 
 
         nIntervalJumps = 0
@@ -133,7 +140,7 @@ class MelodyEvaluator(object):
                 interval_stats['num_sevenths'] += 1
 
         # Expressing as % of total jumps made
-        for key,value in interval_stats:
+        for key,value in interval_stats.items():
             interval_stats[key] = value/nIntervalJumps
         self.eval_stats['interval_stats'] = interval_stats
 
