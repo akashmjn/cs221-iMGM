@@ -80,11 +80,15 @@ Takes a MIDI file, and converts one of the tracks in the file
   if true, makes the one hot np sub-arrays represent chords with multiple ones
   if false, assumes each note happens independent of chords and returns one-hot vectors
 
-@return a numpy matrix of shape (num_chords_in_MIDI_track x NUM_POSSIBLE_NOTES)
+@return a numpy matrix of shape (num_chords_in_MIDI_track x NUM_POSSIBLE_NOTES), None if some error
 '''
 def midi_to_matrix(midi_path, join_chords = True):
+    try:
+        midi_data = pretty_midi.PrettyMIDI(midi_path)
+    except:
+        print ("Error processing file, MIDI output path: %s" % output_file_path)
+        return None
     # get data from MIDI file
-    midi_data = pretty_midi.PrettyMIDI(midi_path)
 
     # get the instruments that are not drums (if option is selected)
     note_list = map(lambda i: i.notes, midi_data.instruments)
