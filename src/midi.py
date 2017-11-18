@@ -1,7 +1,37 @@
+'''
+@author Nathan Dalal
+A demo is commented here for example usage.
+
+def demo():
+    merge_tracks('data/example.mid', 'data/merged.mid')
+    answer = midi_to_matrix('data/merged.mid')
+    matrix_to_midi(answer, 'data/output.mid')
+'''
 import numpy as np
 import pretty_midi
 
+# There are 128 possible notes in a MIDI file.
 NUM_POSSIBLE_NOTES = 128
+
+'''
+Calls merge_tracks() on each MIDI file in input_dir and places into output_dir.
+
+This function has no return value and puts the MIDI files 
+  in the output path specified.
+
+@param input_dir -> path to folder containing MIDI file to convert
+@param out_midi_path -> path to folder which will contain outputted MIDI files
+@param out_instrument_name -> instrument of the output file track
+@param include_drums -> allows filtering out of drum and percussion based instruments
+'''
+def merge_many_tracks(input_dir, output_dir, merged_filename_label = "merged" ,out_instrument_name = "Cello", include_drums = True):
+    import os
+    for root, dirs, filenames in os.walk(input_dir):
+        for f in filenames:
+            if f.endswith(".mid"):
+                input_file_path = os.path.join(input_dir, f)
+                output_file_path = os.path.join(output_dir, f[:-4] + "_" + merged_filename_label + ".mid")
+                merge_tracks(input_file_path, output_file_path, out_instrument_name, include_drums)
 
 '''
 Merges all tracks of one MIDI file and outputs a MIDI file with just one track.
@@ -126,17 +156,3 @@ def matrix_to_midi(matrix, out_midi_path, instrument_name = "Cello", note_length
 
     midi_data.instruments.append(track)
     midi_data.write(out_midi_path)
-
-'''
-A demo is commented here for example usage.
-
-def demo():
-    merge_tracks('data/example.mid', 'data/merged.mid')
-    answer = midi_to_matrix('data/merged.mid')
-    matrix_to_midi(answer, 'data/output.mid')
-'''
-def demo():
-    merge_tracks('data/example.mid', 'data/merged.mid')
-    answer = midi_to_matrix('data/merged.mid')
-    matrix_to_midi(answer, 'data/output.mid')
-demo()
