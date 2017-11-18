@@ -202,8 +202,8 @@ def midi_to_matrix_quantized(midi_path, join_chords = False, use_min_t = False):
         quarter_note_length = (song_length / num_beats) * 4
         piano_roll = midi_data.get_piano_roll(1 / (quarter_note_length)).T
         for i, chord in enumerate(piano_roll):
-            for pitch in np.nonzero(chord)[0]:
-                piano_roll[i][pitch] = 1
+            for j, pitch in enumerate(np.nonzero(chord)[0]):
+                piano_roll[i][pitch] = 1 if j == 0 or join_chords else 0
         return piano_roll
 
     new_notes = []
