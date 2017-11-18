@@ -16,35 +16,32 @@ NUM_POSSIBLE_NOTES = 128
 '''
 Calls merge_tracks() on each MIDI file in input_dir and places into output_dir.
 
+This function has no return value and puts the MIDI files
+    in the output dir specified.
+
 @param input_dir -> path to folder containing MIDI file to convert
 @param out_midi_path -> path to folder which will contain outputted MIDI files
 @param recursive -> whether to recursively search through directories
 @param out_instrument_name -> instrument of the output file track
 @param include_drums -> allows filtering out of drum and percussion based instruments
 @param num_tracks -> should be set to zero, do not change -> important for labeling files in recursion
-
-@return number of tracks merged
 '''
-def merge_many_tracks(input_dir, output_dir, recursive = True, merged_filename_label = "merged" ,out_instrument_name = "Cello", include_drums = True, num_tracks = 0):
+def merge_many_tracks(input_dir, output_dir, recursive = True, merged_filename_label = "merged" ,out_instrument_name = "Cello", include_drums = True):
     import os
     for root, dirs, filenames in os.walk(input_dir):
         for f in filenames:
             if f.endswith(".mid"):
                 input_file_path = os.path.join(input_dir, f)
-                output_file_path = os.path.join(output_dir, str(num_tracks) + "_" + f[:-4] + "_" + merged_filename_label + ".mid")
+                output_file_path = os.path.join(output_dir, f[:-4] + "_" + merged_filename_label + ".mid")
                 try:
                     merge_tracks(input_file_path, output_file_path, out_instrument_name, include_drums)
-                    num_tracks += 1
                     print ("merged successfully, MIDI output path: %s" % output_file_path)
                 except:
                     print ("FAILURE: merging failed on following MIDI input path: %s" % input_file_path)
         if recursive:
             for next_dirname in dirs:
-                num_tracks += merge_many_tracks(os.path.join(input_dir, next_dirname), output_dir, \
+                merge_many_tracks(os.path.join(input_dir, next_dirname), output_dir, \
                     recursive, merged_filename_label, out_instrument_name, include_drums, num_tracks)
-
-    return num_tracks
-
 '''
 Merges all tracks of one MIDI file and outputs a MIDI file with just one track.
 
@@ -168,5 +165,3 @@ def matrix_to_midi(matrix, out_midi_path, instrument_name = "Cello", note_length
 
     midi_data.instruments.append(track)
     midi_data.write(out_midi_path)
-
-merge_many_tracks('data/raw/', 'data/merged/')
