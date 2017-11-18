@@ -9,6 +9,7 @@ def demo():
 '''
 import numpy as np
 import pretty_midi
+import pdb
 
 # There are 128 possible notes in a MIDI file.
 NUM_POSSIBLE_NOTES = 128
@@ -128,9 +129,10 @@ Creates a one-hot 1D np array of the note passed in.
 @return -> one-hot vector of size 128 (or many-hot if vec is not None)
 '''
 def note_2_vec(note_data, vec = np.array([])):
+    #pdb.set_trace()
     if not vec.any():
         vec = np.zeros(NUM_POSSIBLE_NOTES, np.int32)
-    vec[note_data.pitch] = 1
+    vec[note_data] = 1
     return vec
 
 '''
