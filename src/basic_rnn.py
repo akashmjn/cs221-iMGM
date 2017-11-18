@@ -1,5 +1,6 @@
 import glob
 import numpy as np
+import os
 import tensorflow as tf
 
 from midi import midi_to_matrix, matrix_to_midi
@@ -55,7 +56,7 @@ class RNNMusic:
     def run_epoch(self, sess, files):
         num_files, epoch_loss = 0, 0
         for file in files:
-            matrix = midi_to_matrix(file)
+            matrix = midi_to_matrix(file, join_chords=False)
             if matrix is None or len(matrix)<self.input_len+1:
                 continue
             else:
@@ -74,10 +75,30 @@ class RNNMusic:
     def fit(self, sess, saver, folder):
         if folder[-1] != '/':
             folder += '/'
-        files = glob.glob(folder)
+        files = glob.glob(folder + '*')
         epoch_losses = []
         for i in range(self.num_epochs):
             print('***** Epoch ' + str(i) + ' *****')
             epoch_losses.append(self.run_epoch(sess, files))
-            print('Saving model')
-            
+            print('Average loss for this epoch: ' + str(sum(epoch_losses)/len(epoch_losses)))
+            print('Saving model and loss progression for the epoch')
+            with open('../models/shitty_rnn/epoch'+str(i+1)+'.txt', 'w') as f:
+                for loss in epoch_losses:
+                    f.write(str(loss) + '\n')
+            saver.save(sess, '../models/shitty_rnn/epoch'+str(i+1)+'.ckpt')
+            print('Model saved')
+    
+    def generate(self, start_notes):
+        pass
+
+###############################################################################
+
+if __name__ == '__main__':
+    FOLDER = '../data/rnn_music/'
+    with tf.Graph().as_default():
+        rnn_music = RNNMusic(num_epochs=2)
+        init = tf.global_variables_initializer()
+        saver = tf.train.Saver()
+        with tf.Session() as sess:
+            sess.run(init)
+            rnn_music.fit(sess, saver, FOLDER)
