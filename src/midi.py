@@ -86,7 +86,7 @@ def midi_to_matrix(midi_path, join_chords = True):
     try:
         midi_data = pretty_midi.PrettyMIDI(midi_path)
     except:
-        print ("Error processing file, MIDI output path: %s" % output_file_path)
+        print ("Error processing file, MIDI output path: %s" % midi_path)
         return None
     # get data from MIDI file
 
