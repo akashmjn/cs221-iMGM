@@ -90,10 +90,6 @@ def midi_to_matrix(midi_path, join_chords = True):
         print ("Error processing file, MIDI output path: %s" % midi_path)
         return None
 
-    # get piano roll
-    tempo = midi_data.estimate_tempo()
-    piano_roll = midi_data.get_piano_roll(fs=tempo)
-
     # get the instruments that are not drums (if option is selected)
     note_list = map(lambda i: i.notes, midi_data.instruments)
 

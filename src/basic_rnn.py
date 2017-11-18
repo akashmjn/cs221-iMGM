@@ -32,9 +32,9 @@ class RNNMusic:
         return feed_dict
     
     def forward_prop(self):
-        cells = [tf.contrib.rnn.BasicLSTMCell(100) for _ in range(self.input_len)]
-        multi_rnn_cell = tf.contrib.rnn.MultiRNNCell(cells)
-        output, state = tf.nn.dynamic_rnn(cells, self.inputs, dtype=tf.float32)
+        lstm_cell = tf.nn.rnn_cell.BasicLSTMCell(100)
+        initial_state = lstm_cell.zero_state(self.input_len, dtype=tf.float32)
+        output, state = tf.nn.dynamic_rnn(lstm_cell, self.inputs, initial_state=initial_state, dtype=tf.float32)
         newstate = tf.contrib.layers.fully_connected(output, 128, activation_fn=None)
         newstate_prob = tf.contrib.layers.softmax(newstate)
         return newstate_prob
