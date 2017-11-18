@@ -103,12 +103,13 @@ class MelodyEvaluator(object):
         A dictionary of composition statistics with fields updated to include new
         intervals.
         """
-        interval_stats = defaultdict(int) 
+        self.eval_stats['interval_stats'] = defaultdict(int) 
 
         nIntervalJumps = 0
         for i in range(1,melody_matrix.shape[0]):
             currNoteVec,prevNoteVec = (melody_matrix[i,:], melody_matrix[i-1,:] )
             currNote,prevNote = (np.argmax(currNoteVec), np.argmax(prevNoteVec) )
+            # pdb.set_trace()
 
             # skip all the interval updating if either are blank, or no jump
             interval = abs(currNote-prevNote)
@@ -122,27 +123,27 @@ class MelodyEvaluator(object):
             # elif interval == REST_INTERVAL_AFTER_THIRD_OR_FIFTH:
             #     interval_stats['num_special_rest_intervals'] += 1
             if interval >= OCTAVE:
-                interval_stats['num_octave_jumps'] += 1
+                self.eval_stats['interval_stats']['num_octave_jumps'] += 1
                 # elif interval == (IN_KEY_FIFTH or
                 #     interval == IN_KEY_THIRD):
-                # interval_stats['num_in_key_preferred_intervals'] += 1
+                # self.eval_stats['interval_stats']['num_in_key_preferred_intervals'] += 1
             elif interval == FIFTH:
-                interval_stats['num_fifths'] += 1
+                self.eval_stats['interval_stats']['num_fifths'] += 1
             elif interval == THIRD:
-                interval_stats['num_thirds'] += 1
+                self.eval_stats['interval_stats']['num_thirds'] += 1
             elif interval == SIXTH:
-                interval_stats['num_sixths'] += 1
+                self.eval_stats['interval_stats']['num_sixths'] += 1
             elif interval == SECOND:
-                interval_stats['num_seconds'] += 1
+                self.eval_stats['interval_stats']['num_seconds'] += 1
             elif interval == FOURTH:
-                interval_stats['num_fourths'] += 1
+                self.eval_stats['interval_stats']['num_fourths'] += 1
             elif interval == SEVENTH:
-                interval_stats['num_sevenths'] += 1
+                self.eval_stats['interval_stats']['num_sevenths'] += 1
 
         # Expressing as % of total jumps made
-        for key,value in interval_stats.items():
-            interval_stats[key] = value/nIntervalJumps
-        self.eval_stats['interval_stats'] = interval_stats
+        # pdb.set_trace()
+        for key,value in self.eval_stats['interval_stats'].items():
+            self.eval_stats['interval_stats'][key] = value/nIntervalJumps
 
     ### Chord-based evaluation scores ###
 
