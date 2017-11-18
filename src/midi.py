@@ -4,36 +4,53 @@ import pretty_midi
 NUM_POSSIBLE_NOTES = 128
 
 '''
+Merges all tracks of one MIDI file and outputs a MIDI file with just one track.
+
+This function has no return value and puts the MIDI file 
+  in the output path specified.
+
+@param in_midi_path -> path to MIDI file to convert
+@param out_midi_path -> path to MIDI file where the output is written
+@param out_instrument_name -> instrument of the output file track
+@param include_drums -> allows filtering out of drum and percussion based instruments
+'''
+def merge_tracks(in_midi_path, out_midi_path, out_instrument_name = "Cello", include_drums = True):
+    midi_data = pretty_midi.PrettyMIDI(in_midi_path)
+    notes = sum(map(lambda i: i.notes, filter(lambda i: include_drums or not i.is_drum, midi_data.instruments)), [])
+    notes.sort(key=lambda note: note.start)
+
+    if not notes:
+        raise Exception(("empty MIDI file %s" % in_midi_path) if include_drums else ("no non-drum tracks or empty MIDI file %s" % in_midi_path))
+
+    out_midi_data = pretty_midi.PrettyMIDI()
+    instrument_program = pretty_midi.instrument_name_to_program(out_instrument_name)
+    track = pretty_midi.Instrument(program=instrument_program)
+
+    track.notes = notes
+    out_midi_data.instruments.append(track)
+    out_midi_data.write(out_midi_path)
+
+'''
 Creates a matrix from a MIDI file.
 Takes a MIDI file, and converts one of the tracks in the file
   to the matrix specified below.
 
-@param midi_path -> path to midi file to convert
-@param join_tracks -> 
-  takes all tracks and combines the tracks into one track, so chords
-  are represented across instruments
+@param midi_path -> path to MIDI file to convert
 @param join_chords ->
   if true, makes the one hot np sub-arrays represent chords with multiple ones
   if false, assumes each note happens independent of chords and returns one-hot vectors
-@param no_drums ->
-  allows the user to exclude drum tracks from the matrix of output notes
 
 @return a numpy matrix of shape (num_chords_in_MIDI_track x NUM_POSSIBLE_NOTES)
 '''
-def midi_to_matrix(midi_path, join_tracks = True, join_chords = True, no_drums = False):
-    # get data from midi file
+def midi_to_matrix(midi_path, join_chords = True):
+    # get data from MIDI file
     midi_data = pretty_midi.PrettyMIDI(midi_path)
 
-    # pick the instrument that is not a drum that has the most notes
-    non_drum_tracks = map(lambda i: i.notes, filter(lambda i: no_drums or not i.is_drum, midi_data.instruments))
-    if not non_drum_tracks:
-        raise Exception("midi file is empty or does not contain any non-drum tracks:\n\t %s" % midi_path)
+    # get the instruments that are not drums (if option is selected)
+    note_list = map(lambda i: i.notes, midi_data.instruments)
 
-    if join_tracks:
-        notes = sum(non_drum_tracks, [])
-        notes.sort(key=lambda note: note.start)
-    else:
-        notes = max(non_drum_tracks, key=lambda i:len(i.notes)).notes
+    # pick the track with the most notes
+    notes = max(note_list, key=lambda notes:len(notes))
 
     if not join_chords:
         return np.array([note_2_vec(note.pitch) for note in notes], np.int32)
@@ -94,7 +111,7 @@ This function has no return value and puts the matrix
 @param note_length -> length of each note in output
 @param velocity -> velocity of each output note
 '''
-def matrix_to_midi(matrix, out_midi_path, instrument_name="Cello", note_length = 0.5, velocity = 100):
+def matrix_to_midi(matrix, out_midi_path, instrument_name = "Cello", note_length = 0.5, velocity = 100):
     midi_data = pretty_midi.PrettyMIDI()
     instrument_program = pretty_midi.instrument_name_to_program(instrument_name)
     track = pretty_midi.Instrument(program=instrument_program)
@@ -114,10 +131,12 @@ def matrix_to_midi(matrix, out_midi_path, instrument_name="Cello", note_length =
 A demo is commented here for example usage.
 
 def demo():
-  answer = midi_to_matrix('data/example.mid')
-  matrix_to_midi(answer, 'data/output.mid')
+    merge_tracks('data/example.mid', 'data/merged.mid')
+    answer = midi_to_matrix('data/merged.mid')
+    matrix_to_midi(answer, 'data/output.mid')
 '''
 def demo():
-    answer = midi_to_matrix('data/example.mid')
+    merge_tracks('data/example.mid', 'data/merged.mid')
+    answer = midi_to_matrix('data/merged.mid')
     matrix_to_midi(answer, 'data/output.mid')
 demo()
