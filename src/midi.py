@@ -193,16 +193,23 @@ def midi_to_matrix_quantized(midi_path, join_chords = False, use_min_t = False):
     # pick the track with the most notes
     notes = max(note_list, key=lambda notes:len(notes))
     
+    times = [note.end-note.start for note in notes]
     if use_min_t: # Get a list of time deltas for every note. Choose the lowest delta to be a quarter note
-        times = [note.end-note.start for note in notes]
         beat_length = min(times)
     else: # calculate average time of one beat in song
         song_length = midi_data.get_end_time()
         num_beats = midi_data.estimate_tempo() * 60
-        beat_length = song_length / num_beats
+        quarter_note_length = (song_length / num_beats) * 4
+        piano_roll = midi_data.get_piano_roll(1 / (quarter_note_length)).T
+        for i, chord in enumerate(piano_roll):
+            for pitch in np.nonzero(chord)[0]:
+                piano_roll[i][pitch] = 1
+        return piano_roll
 
     new_notes = []
     for i,note in enumerate(notes):
         new_notes.extend([note]*int(times[i]/beat_length))
+
+    print (min(times), beat_length)
 
     return np.array([note_2_vec(note.pitch) for note in new_notes], np.int32)
