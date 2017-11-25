@@ -3,7 +3,7 @@ import numpy as np
 import os
 import tensorflow as tf
 
-from midi import midi_to_matrix, matrix_to_midi
+from .midi import midi_to_matrix, matrix_to_midi
 
 ###############################################################################
 

@@ -1,6 +1,6 @@
 import numpy as np
 
-from midi import matrix_to_midi
+from .midi import matrix_to_midi
 
 ###############################################################################
 

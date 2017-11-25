@@ -1,0 +1,8 @@
+# TODOs / improvements 
+
+For monte-carlo / markov:
+    - Modify file reader to discretize notes (if discretizing into quarter notes, a whole note will have 
+            sequence of 4 vectors)
+    - Modify file reader to include pauses (encoded separately in our vector)
+    - Modify state representation to use intervals
+

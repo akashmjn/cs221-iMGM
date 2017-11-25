@@ -3,7 +3,7 @@ import numpy as np
 import random
 
 from collections import defaultdict
-from midi import midi_to_matrix, matrix_to_midi, midi_to_matrix_quantized
+from .midi import midi_to_matrix, matrix_to_midi, midi_to_matrix_quantized
 
 ###############################################################################
 

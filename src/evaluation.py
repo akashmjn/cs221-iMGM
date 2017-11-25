@@ -1,45 +1,9 @@
 import numpy as np
-import pretty_midi
 from collections import defaultdict
 import pdb
-
+from . import constants
 
 ## TODO: Handle all the license stuff, when taking code from magenta/models/rl_tuner
-
-# Music theory constants used in defining reward functions.
-# Note that action 2 = midi note 48.
-C_MAJOR_SCALE = [2, 4, 6, 7, 9, 11, 13, 14, 16, 18, 19, 21, 23, 25, 26]
-C_MAJOR_KEY = [0, 1, 2, 4, 6, 7, 9, 11, 13, 14, 16, 18, 19, 21, 23, 25, 26, 28,
-               30, 31, 33, 35, 37]
-C_MAJOR_TONIC = 14
-A_MINOR_TONIC = 23
-MAJOR_PATTERN = [2,2,1,2,2,2,1]
-
-# The number of half-steps in musical intervals, in order of dissonance
-OCTAVE = 12
-FIFTH = 7
-THIRD = 4
-SIXTH = 9
-SECOND = 2
-FOURTH = 5
-SEVENTH = 11
-HALFSTEP = 1
-
-# Special intervals that have unique rewards
-REST_INTERVAL = -1
-HOLD_INTERVAL = -1.5
-REST_INTERVAL_AFTER_THIRD_OR_FIFTH = -2
-HOLD_INTERVAL_AFTER_THIRD_OR_FIFTH = -2.5
-IN_KEY_THIRD = -3
-IN_KEY_FIFTH = -5
-
-# Indicate melody direction
-ASCENDING = 1
-DESCENDING = -1
-
-# Indicate whether a melodic leap has been resolved or if another leap was made
-LEAP_RESOLVED = 1
-LEAP_DOUBLED = -1
 
 ## Idea of rough evaluation rules that can be used (search for Music Theory Rewards):
 # https://magenta.tensorflow.org/2016/11/09/tuning-recurrent-networks-with-reinforcement-learning/
@@ -51,7 +15,7 @@ class MelodyEvaluator(object):
     def __init__(self,root):
         self.root = root
         self.eval_stats = defaultdict(float)
-        self.MAJOR_PATTERN = [2,2,1,2,2,2,1]
+        self.constants = constants
 
     def evaluate_melody(self,melody_matrix):
         self.eval_in_key_stat(melody_matrix)
@@ -86,9 +50,9 @@ class MelodyEvaluator(object):
         """       
         scale = set() 
         if type=='major':
-            pattern = self.MAJOR_PATTERN*nOctaves*2
+            pattern = self.constants.MAJOR_PATTERN*nOctaves*2
             # get lowest note, iterate len(pattern)*nOctaves*2 times
-            currNote = self.root-nOctaves*OCTAVE
+            currNote = self.root-nOctaves*self.constants.OCTAVE
             scale.add(currNote)
             # pdb.set_trace()
             for i in range(len(pattern)):
@@ -128,22 +92,22 @@ class MelodyEvaluator(object):
             #     interval_stats['num_rest_intervals'] += 1
             # elif interval == REST_INTERVAL_AFTER_THIRD_OR_FIFTH:
             #     interval_stats['num_special_rest_intervals'] += 1
-            if interval >= OCTAVE:
+            if interval >= self.constants.OCTAVE:
                 self.eval_stats['interval_stats']['num_octave_jumps'] += 1
                 # elif interval == (IN_KEY_FIFTH or
                 #     interval == IN_KEY_THIRD):
                 # self.eval_stats['interval_stats']['num_in_key_preferred_intervals'] += 1
-            elif interval == FIFTH:
+            elif interval == self.constants.FIFTH:
                 self.eval_stats['interval_stats']['num_fifths'] += 1
-            elif interval == THIRD:
+            elif interval == self.constants.THIRD:
                 self.eval_stats['interval_stats']['num_thirds'] += 1
-            elif interval == SIXTH:
+            elif interval == self.constants.SIXTH:
                 self.eval_stats['interval_stats']['num_sixths'] += 1
-            elif interval == SECOND:
+            elif interval == self.constants.SECOND:
                 self.eval_stats['interval_stats']['num_seconds'] += 1
-            elif interval == FOURTH:
+            elif interval == self.constants.FOURTH:
                 self.eval_stats['interval_stats']['num_fourths'] += 1
-            elif interval == SEVENTH:
+            elif interval == self.constants.SEVENTH:
                 self.eval_stats['interval_stats']['num_sevenths'] += 1
 
         # Normalizing as % of total jumps made

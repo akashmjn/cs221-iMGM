@@ -8,11 +8,9 @@ def demo():
     matrix_to_midi(answer, 'data/output.mid')
 '''
 import numpy as np
-import pretty_midi
 import pdb
-
-# There are 128 possible notes in a MIDI file.
-NUM_POSSIBLE_NOTES = 128
+from . import pretty_midi
+from . import constants
 
 '''
 Calls merge_tracks() on each MIDI file in input_dir and places into output_dir.
@@ -82,7 +80,7 @@ Takes a MIDI file, and converts one of the tracks in the file
 
 @return a numpy matrix of shape (num_chords_in_MIDI_track x NUM_POSSIBLE_NOTES), None if some error
 '''
-def midi_to_matrix(midi_path, join_chords = True):
+def midi_to_matrix(midi_path, join_chords = False):
     # get data from MIDI file
     try:
         midi_data = pretty_midi.PrettyMIDI(midi_path)
@@ -97,7 +95,7 @@ def midi_to_matrix(midi_path, join_chords = True):
     notes = max(note_list, key=lambda notes:len(notes))
 
     if not join_chords:
-        return np.array([note_2_vec(note.pitch) for note in notes], np.int32)
+        return np.array([note_2_vec(note) for note in notes], np.int32)
 
     '''
     The rest of this code is now for merging chords in vectors.
@@ -106,7 +104,7 @@ def midi_to_matrix(midi_path, join_chords = True):
     chord_notes_counted = 0
 
     # make a matrix assuming no chords
-    input_matrix = np.zeros((len(notes), NUM_POSSIBLE_NOTES), np.int32)
+    input_matrix = np.zeros((len(notes), constants.NUM_POSSIBLE_NOTES), np.int32)
 
     # fill in matrix with chord information
     for note_index, note_data in enumerate(notes):
@@ -117,6 +115,7 @@ def midi_to_matrix(midi_path, join_chords = True):
             input_matrix[current_note_index] = note_2_vec(note_data)
             previous_note_data = note_data
         else: # chord case
+            pdb.set_trace()
             input_matrix[current_note_index] = note_2_vec(note_data, input_matrix[current_note_index - 1])
             chord_notes_counted += 1
 
@@ -133,10 +132,9 @@ Creates a one-hot 1D np array of the note passed in.
 @return -> one-hot vector of size 128 (or many-hot if vec is not None)
 '''
 def note_2_vec(note_data, vec = np.array([])):
-    #pdb.set_trace()
     if not vec.any():
-        vec = np.zeros(NUM_POSSIBLE_NOTES, np.int32)
-    vec[note_data] = 1
+        vec = np.zeros(constants.NUM_POSSIBLE_NOTES, np.int32)
+    vec[note_data.pitch] = 1
     return vec
 
 '''
@@ -208,4 +206,5 @@ def midi_to_matrix_quantized(midi_path, join_chords = False, use_min_t = False):
 
     print (min(times), beat_length)
 
-    return np.array([note_2_vec(note.pitch) for note in new_notes], np.int32)
+    return np.array([note_2_vec(note) for note in new_notes], np.int32)
+    
