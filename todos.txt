@@ -1,8 +1,15 @@
 # TODOs / improvements 
 
 For monte-carlo / markov:
-    - Modify file reader to discretize notes (if discretizing into quarter notes, a whole note will have 
+    - DONE: Modify file reader to discretize notes (if discretizing into quarter notes, a whole note will have 
             sequence of 4 vectors)
-    - Modify file reader to include pauses (encoded separately in our vector)
-    - Modify state representation to use intervals
+    - DONE: Modify file reader to include pauses (encoded separately in our vector)
+    - MAYBELATER: Modify state representation to use intervals
+    - TODO: Add constraints while generating, so that there's not too much silence/repetition
 
+For general infrastructure:
+    - Clean up midi reading, use a common base class if possible, try NoteSequence from magenta 
+    - Create filtered dataset for only files with clear melodies, improve on reading files having mutiple chords etc.
+
+Baseline Char-RNN based sequence generation:
+    - TODO: Make V1 Char-RNN melody generation

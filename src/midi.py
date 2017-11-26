@@ -115,7 +115,6 @@ def midi_to_matrix(midi_path, join_chords = False):
             input_matrix[current_note_index] = note_2_vec(note_data)
             previous_note_data = note_data
         else: # chord case
-            pdb.set_trace()
             input_matrix[current_note_index] = note_2_vec(note_data, input_matrix[current_note_index - 1])
             chord_notes_counted += 1
 
