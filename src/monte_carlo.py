@@ -23,9 +23,10 @@ class MarkovSequence(object):
     Maintains an internal list of MarkovState objects. 
     Functions to convert to and from MIDI format
     """
-    def __init__(self,epsilon=1.0/4):
+    def __init__(self,epsilon=1.0/4,maxPause=4):
         self.sequence = []
-        self.epsilon = epsilon 
+        self.epsilon = epsilon # default 16th note i.e. 1/4 quarter notes 
+        self.maxPause = maxPause # default 1 bar i.e. 4 quarter notes
 
     def __len__(self):
         return len(self.sequence)
@@ -54,7 +55,7 @@ class MarkovSequence(object):
         """
         Similar to functions in .midi, picks track with most notes and processes
         However, the representation here is a list of states. Each state can represent
-        a (note/silence) along with its duration.
+        a (note/pause) along with its duration.
         Durations are calculated as a ratio of the beat (a quarter note), by roughy matching notes
         to beats (from pretty_midi) in case tempo changes midway 
         Checks for gaps between notes and adds those as states. If there are many concurrent notes/chords
@@ -93,10 +94,11 @@ class MarkovSequence(object):
                 new_state = MarkovState(self.__round_duration((curr_note.end-curr_note.start)/beat_length),curr_note.pitch)
             else:
                 gap = (curr_note.start-prev_note.end)/beat_length
-                if gap >= self.epsilon: # check for a gap/silence, add to sequence
+                if gap >= self.epsilon: # check for a gap/pause, add to sequence
                     duration = self.__round_duration(gap) # rounding off in terms of epsilon
-                    silence_state = MarkovState(duration,-1) # use -1 to encode a silence
-                    self.add(silence_state)
+                    duration = min(self.maxPause,duration) # clip long pauses (date error from intermittent parts) 
+                    pause_state = MarkovState(duration,-1) # use -1 to encode a pause
+                    self.add(pause_state)
                 if gap >= -self.epsilon: # skips concurrent notes
                     duration = self.__round_duration((curr_note.end-curr_note.start)/beat_length)
                     new_state = MarkovState(duration,curr_note.pitch)
@@ -181,6 +183,7 @@ class MonteCarlo(object):
         '''
 
         # Initialize with a randomly chosen conditional
+        # TODO: Improve this initialization maybe to conditional with most possibilites
         conditional = random.choice(list(self.conditionals.keys()))
         # if note1 is None:
         #     note1 = random.randint(60, 71)

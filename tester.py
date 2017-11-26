@@ -2,6 +2,7 @@ import os,sys
 # from .monte_carlo import *
 # from .evaluation import *
 import src
+import argparse
 from collections import defaultdict
 
 def testMonteCarlo(inpath,outpath,order=1):
@@ -69,13 +70,25 @@ def testAllIO(testpath,outpath):
 
 if __name__ == "__main__":
 
-    if len(sys.argv)>=3:
-        inpath,outpath = sys.argv[1],sys.argv[2]
+    parser = argparse.ArgumentParser(description='Run tests on Markov Generator.')
 
-    # assumes inpath - to a specific file, outpath - folder 
-    # testAllIO(inpath,outpath)    
+    parser.add_argument('-m',dest='mode',default='mkv',
+        help='Selects what tests to run: io (read/write MIDI) or mkv (train generate melody)')
+    parser.add_argument('-i',dest='inpath',
+        help='Input path: MIDI file for io, Folder for mkv')   
+    parser.add_argument('-o',dest='outpath',
+        help='Output path: Folder for io, MIDI file for mkv')      
+    parser.add_argument('--order',dest='order',type=int,default=1,
+        help='Order of markov process. Problematic beyond 2')         
 
-    # assumes inpath - to folder with files, outpath - outputfile
-    testMonteCarlo(inpath,outpath,order=2)
+    args = parser.parse_args()
+    print(args)
+    if len(vars(args))== 0:
+        raise Exception('Invalid arguments')
 
-
+    if args.mode=='io':
+        # assumes inpath - to a specific file, outpath - folder 
+        testAllIO(args.inpath,args.outpath)    
+    elif args.mode=='mkv':
+        # assumes inpath - to folder with files, outpath - outputfile
+        testMonteCarlo(args.inpath,args.outpath,order=args.order)
