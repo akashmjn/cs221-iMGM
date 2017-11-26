@@ -12,4 +12,5 @@ For general infrastructure:
     - Create filtered dataset for only files with clear melodies, improve on reading files having mutiple chords etc.
 
 Baseline Char-RNN based sequence generation:
-    - TODO: Make V1 Char-RNN melody generation
+    - TODO: Make V1 Char-RNN melody generation (with polyphonic encoding)
+    - TODO: Try magenta models on dataset

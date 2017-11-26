@@ -72,7 +72,10 @@ if __name__ == "__main__":
     if len(sys.argv)>=3:
         inpath,outpath = sys.argv[1],sys.argv[2]
 
-    testAllIO(inpath,outpath)    
-    # testMonteCarlo(inpath,outpath)
+    # assumes inpath - to a specific file, outpath - folder 
+    # testAllIO(inpath,outpath)    
+
+    # assumes inpath - to folder with files, outpath - outputfile
+    testMonteCarlo(inpath,outpath,order=2)
 
 
