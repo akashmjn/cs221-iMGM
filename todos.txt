@@ -8,7 +8,8 @@ For monte-carlo / markov:
     - TODO: Add constraints while generating, so that there's not too much silence/repetition
 
 For general infrastructure:
-    - Clean up midi reading, use a common base class if possible, try NoteSequence from magenta 
+    - Clean up midi reading, use a common base class if possible, try NoteSequence from magenta
+      Common class should represent polyphonic notes (i.e. many notes at once, chords etc), durations, along with being able to generate a sequence with silences if required. 
     - Create filtered dataset for only files with clear melodies, improve on reading files having mutiple chords etc.
 
 Baseline Char-RNN based sequence generation:
