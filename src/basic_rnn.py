@@ -86,7 +86,7 @@ class RNNMusic:
             saver.save(sess, os.path.join(saved_models_folder, epoch_folder, 'epoch_'+str(i+1)+'.ckpt'))
             print('Model saved')
     
-    def generate(self, sess, num_notes, save_midi_path, model_folder):
+    def generate(self, sess, num_notes, save_midi_path):
         notes = np.zeros((1,self.input_len,128))
         for i in range(self.input_len):
             notes[0,i,np.random.randint(60,72)] = 1
