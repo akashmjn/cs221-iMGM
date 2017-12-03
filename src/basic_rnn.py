@@ -20,6 +20,8 @@ class RNNMusic:
     
     def build(self):
         self.add_placeholders()
+        self.lstm_cell = tf.contrib.rnn.LSTMCell(num_units=self.num_units, initializer=tf.contrib.layers.xavier_initializer(), activation=tf.nn.leaky_relu)
+        # self.lstm_cell = tf.contrib.rnn.BasicLSTMCell(num_units=self.num_units, activation=tf.nn.relu)
         self.newstate = self.forward_prop()
         self.loss = self.add_loss_op()
         self.train_op = self.add_train_op()
@@ -36,9 +38,9 @@ class RNNMusic:
         return feed_dict
     
     def forward_prop(self):
-        lstm_cell = tf.contrib.rnn.LSTMCell(num_units=self.num_units, initializer=tf.contrib.layers.xavier_initializer(), activation=tf.nn.relu)
+        # lstm_cell = tf.contrib.rnn.LSTMCell(num_units=self.num_units, initializer=tf.contrib.layers.xavier_initializer(), activation=tf.nn.relu)
         # lstm_cell = tf.contrib.rnn.BasicLSTMCell(num_units=self.num_units, activation=tf.nn.relu)
-        output, state = tf.nn.dynamic_rnn(lstm_cell, self.inputs, dtype=tf.float32)
+        output, state = tf.nn.dynamic_rnn(self.lstm_cell, self.inputs, dtype=tf.float32)
         final_output = output[:,-1,:]
         newscore = tf.contrib.layers.fully_connected(final_output, 128, activation_fn=None)
         newstate = tf.nn.softmax(newscore)
@@ -100,7 +102,7 @@ class RNNMusic:
     def generate(self, sess, num_notes, save_midi_path, stats_path):
         notes = np.zeros((1,self.input_len,128))
         for i in range(self.input_len):
-            notes[0,i,np.random.randint(60,72)] = 1
+            notes[0,i,np.random.randint(30,90)] = 1
         for _ in range(num_notes):
             input = notes[:,-self.input_len:,:]
             feed_dict = self.create_feed_dict(inputs=input)

@@ -8,9 +8,9 @@ from collections import defaultdict
 import pdb
 
 input_len = 5
-num_units = 64
+num_units = 16
 lr = 0.005
-num_epochs = 10
+num_epochs = 1
 FOLDER = './data/overfit/'
 saved_models_folder = './models/shitty_rnn/'
 
@@ -42,6 +42,7 @@ with tf.Graph().as_default():
     saver = tf.train.Saver()
     with tf.Session() as sess:
         sess.run(init)
+        var1, name1 = sess.run(var[0]), var[0]
         rnn_music.fit(sess, saver, FOLDER, saved_models_folder)
 
 # Test
