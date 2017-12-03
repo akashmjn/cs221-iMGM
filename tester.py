@@ -1,4 +1,7 @@
+#/usr/bin/env python3
+
 import os,sys
+import glob
 # from .monte_carlo import *
 # from .evaluation import *
 import src
@@ -68,18 +71,33 @@ def testAllIO(testpath,outpath):
     print("Running io with just markov sequence reader")   
     markov_io(testpath,os.path.join(outpath,fname))
 
+# input - path, suffix to search for, extension
+def collectMIDIFiles(source_path,dest_path,suffix):
+    if suffix:
+        queryPath = os.path.join(source_path,'**','*'+suffix)
+    generator = glob.iglob(queryPath,recursive=True)
+    # Create subfolder for a suffix if required 
+    os.system('mkdir -p '+dest_path)
+    count = 0
+    for file in generator:
+        os.system('cp "{}" "{}"'.format(file,dest_path))
+        count += 1
+    print("Copied {} files into {}".format(count,dest_path))
+
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(description='Run tests on Markov Generator.')
 
     parser.add_argument('-m',dest='mode',default='mkv',
-        help='Selects what tests to run: io (read/write MIDI) or mkv (train generate melody)')
+        help='Selects what scripts to run: io (read/write MIDI) or mkv (train generate melody) or fmidi (to collect midi files)')
     parser.add_argument('-i',dest='inpath',
         help='Input path: MIDI file for io, Folder for mkv')   
     parser.add_argument('-o',dest='outpath',
         help='Output path: Folder for io, MIDI file for mkv')      
     parser.add_argument('--order',dest='order',type=int,default=1,
         help='Order of markov process. Problematic beyond 2')         
+    parser.add_argument('--suffix',dest='suffix',default='*.mid',
+        help='File suffix to collect. Defaults to *.mid')            
 
     args = parser.parse_args()
     print(args)
@@ -92,3 +110,5 @@ if __name__ == "__main__":
     elif args.mode=='mkv':
         # assumes inpath - to folder with files, outpath - outputfile
         testMonteCarlo(args.inpath,args.outpath,order=args.order)
+    elif args.mode=='fmidi':
+        collectMIDIFiles(args.inpath,args.outpath,args.suffix)
