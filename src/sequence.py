@@ -1,6 +1,10 @@
-from .constants import NUM_POSSIBLE_NOTES
+from .constants import NUM_POSSIBLE_NOTES, OCTAVE, SILENCE
 import numpy as np
 from . import pretty_midi
+import mingus.core.chords as mingus_chords
+import mingus.core.notes as mingus_notes
+
+MarkovChordState = namedtuple('MarkovState',['chord','duration'])
 
 class Sequence(object):
     def __init__(self, epsilon = 1.0 / 4):
@@ -29,7 +33,7 @@ class Sequence(object):
         end_index = int(note_data.end / unit_length)
         return (start_index, end_index)
 
-    def from_midi(self, midi_path, join_tracks = True):
+    def load_midi(self, midi_path, join_tracks = True):
         """
         Similar to functions in .midi, picks track with most notes and processes
         However, the representation here is a list of states. Each state can represent
@@ -63,9 +67,6 @@ class Sequence(object):
         # (may not be constant due to tempo changes)
         beats = midi_data.get_beats()
 
-        '''
-        TODO - convert note list to many-hot vector representation
-        '''
         beat_idx, beat_length = 1, None
         for note_data in notes:
             while beat_idx < (len(beats) - 1) and beats[beat_idx] < note_data.start:
@@ -94,7 +95,7 @@ class Sequence(object):
             vec[note_data.pitch] = 1
         return vec
 
-    def to_midi(self, midi_path, beat_length = 0.5, instrument_name = "Cello", velocity = 100, one_hot = False):
+    def many_hot_to_midi(self, midi_path, beat_length = 0.5, instrument_name = "Cello", velocity = 100, one_hot = False):
         """
         As in .midi, converts sequence back to MIDI for output.
         """
@@ -103,14 +104,13 @@ class Sequence(object):
         track = pretty_midi.Instrument(program=instrument_program)
 
         current_pitches = dict()
+        unit_length = beat_length * self.epsilon # normalizing times w.r.t. quarter notes
 
         starting_time = 0
         for many_hot_state in self.sequence:
 
-            note_length = beat_length * self.epsilon # normalizing times w.r.t. quarter notes
-
             timestep_pitches = set(np.nonzero(many_hot_state)[0])
-            if one_hot: # Pick the highest note to get a one-hot representation.
+            if one_hot: # Pick the highest pitch to get a one-hot representation.
                 timestep_pitches = set(max(timestep_pitches))
             processed_pitches = set()
 
@@ -132,13 +132,36 @@ class Sequence(object):
                 if timestep_pitch not in current_pitches:
                     current_pitches[timestep_pitch] = starting_time
 
-            starting_time += note_length
+            starting_time += unit_length
 
         # Fill in the remaining unprocessed pitches.
         for current_pitch in current_pitches:
             note = pretty_midi.Note(
                 velocity=velocity, pitch=current_pitch, start=current_pitches[current_pitch], end=starting_time)
             track.notes.append(note)
+
+        midi_data.instruments.append(track)
+        midi_data.write(midi_path)
+
+    def chords_to_midi(self, midi_path, beat_length = 0.5, instrument_name = "Cello", velocity = 100, one_hot = False):
+        """
+        As in .midi, converts sequence back to MIDI for output.
+        """
+        midi_data = pretty_midi.PrettyMIDI()
+        instrument_program = pretty_midi.instrument_name_to_program(instrument_name)
+        track = pretty_midi.Instrument(program=instrument_program)
+
+        chord_sequence = self.to_chord_list()
+        unit_length = beat_length * self.epsilon
+
+        starting_time = 0
+        for chord, duration in chord_sequence:
+            vec = self.chord_to_vec(chord, one_hot = one_hot)
+            for pitch in np.nonzero(vec)[0]:
+                note = pretty_midi.Note(
+                    velocity=velocity, pitch=pitch, start=starting_time, end=starting_time + duration * unit_length)
+                track.notes.append(note)
+            starting_time += duration * unit_length
 
         midi_data.instruments.append(track)
         midi_data.write(midi_path)
@@ -151,10 +174,52 @@ class Sequence(object):
     def to_matrix(self):
         return np.asmatrix(self.sequence)
 
+    def vec_to_chord(self, vec, one_hot = False):
+        base_pitches = [pitch % NUM_NOTES_IN_OCTAVE for pitch in np.nonzero(vec)[0]]
+        base_notes = [mingus_notes.int_to_note(base_pitch) for base_pitch in base_pitches]
+
+        if len(base_pitches) == 0:
+            return SILENCE # SILENCE
+        if one_hot: # Pick the highest pitch to get a one-hot representation.
+            base_notes = [base_notes[-1]]
+        return mingus_chords.determine(base_notes, True)[0]
+
+    def chord_to_vec(self, chord, one_hot = False):
+        vec = self.note_2_vec()
+
+        if chord == SILENCE:
+            return vec
+
+        base_notes = mingus_chords.from_shorthand(chord)
+        base_pitches = sorted(set([mingus_notes.int_to_note(base_pitch) for base_note in base_notes]))
+
+        if one_hot:
+            base_pitches = [base_pitches[-1]]
+
+        for pitch in base_pitches:
+            vec[pitch] = 1
+        return vec
+
+    def to_chord_list(self, one_hot = False):
+        if not self.sequence:
+            return []
+
+        chord_sequence = [MarkovChordState(self.vec_to_chord(self.sequence[0], one_hot = one_hot), 0)]
+
+        for many_hot_state in self.sequence:
+            state_chord = self.vec_to_chord(many_hot_state, one_hot = one_hot)
+            current_chord, duration = chord_sequence[-1]
+            if current_chord == state_chord:
+                chord_sequence[-1].duration += 1
+            else:
+                chord_sequence.append(MarkovChordState(state_chord, 1))
+
+        return chord_sequence
+
 def test_sequence_class(filepath = "../data/example.mid"):
-    seq = Sequence()
-    seq.from_midi(filepath)
-    seq.to_midi(filepath[:-4] + "-merged.mid")
+    seq = Sequence(filepath)
+    seq.load_midi(filepath)
+    seq.many_hot_to_midi(filepath[:-4] + "-merged.mid")
 
 if __name__ == "__main__":
     test_sequence_class()

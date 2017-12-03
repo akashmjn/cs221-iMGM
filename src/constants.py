@@ -4,6 +4,8 @@
 # There are 128 possible notes in a MIDI file.
 NUM_POSSIBLE_NOTES = 128
 
+SILENCE = "SILENCE"
+
 # Music theory constants used in defining reward functions.
 # Note that action 2 = midi note 48.
 C_MAJOR_SCALE = [2, 4, 6, 7, 9, 11, 13, 14, 16, 18, 19, 21, 23, 25, 26]
