@@ -1,6 +1,6 @@
-from constants import NUM_POSSIBLE_NOTES
+from .constants import NUM_POSSIBLE_NOTES
 import numpy as np
-import pretty_midi
+from . import pretty_midi
 
 class Sequence(object):
     def __init__(self, epsilon = 1.0 / 4):
