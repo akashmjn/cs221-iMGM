@@ -16,13 +16,13 @@ class RNNMusic:
     
     def build(self):
         self.add_placeholders()
-        newstate_prob = self.forward_prop()
-        self.loss = self.add_loss_op(newstate_prob)
+        self.newstate = self.forward_prop()
+        self.loss = self.add_loss_op(newstate)
         self.train_op = self.add_train_op()
     
     def add_placeholders(self):
-        self.inputs = tf.placeholder(shape=(None,self.input_len,128), dtype=tf.int32)
-        self.labels = tf.placeholder(shape=(None,128), dtype=tf.int32)
+        self.inputs = tf.placeholder(shape=(None,self.input_len,128), dtype=tf.float32)
+        self.labels = tf.placeholder(shape=(None,128), dtype=tf.float32)
     
     def create_feed_dict(self, inputs, labels=None):
         feed_dict = {}
@@ -32,16 +32,13 @@ class RNNMusic:
         return feed_dict
     
     def forward_prop(self):
-        lstm_cell = tf.nn.rnn_cell.BasicLSTMCell(100)
-        initial_state = lstm_cell.zero_state(self.input_len, dtype=tf.float32)
-        output, state = tf.nn.dynamic_rnn(lstm_cell, self.inputs, initial_state=initial_state, dtype=tf.float32)
-        newstate = tf.contrib.layers.fully_connected(output, 128, activation_fn=None)
-        newstate_prob = tf.contrib.layers.softmax(newstate)
-        return newstate_prob
+        lstm_cell = tf.contrib.rnn.BasicLSTMCell(num_units=16, activation=tf.nn.relu)
+        output, state = tf.nn.dynamic_rnn(lstm_cell, self.inputs, dtype=tf.float32)
+        final_output = output[:,-1,:]
+        self.newstate = tf.contrib.layers.fully_connected(final_output, 128, activation_fn=None)
     
-    def add_loss_op(self, newstate_prob):
-        newstate_prob = self.forward_prop()
-        loss = tf.reduce_mean(tf.softmax_cross_entropy_with_logits(labels=self.labels, logits=newstate_prob))
+    def add_loss_op(self, newstate):
+        loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(labels=self.labels, logits=newstate))
         return loss
     
     def add_train_op(self):
@@ -63,7 +60,7 @@ class RNNMusic:
                 num_files += 1
                 inputs = []
                 labels = []
-                for i in range(len(matrix)-1):
+                for i in range(len(matrix)-self.input_len):
                     inputs.append(matrix[i:i+self.input_len,:])
                     labels.append(matrix[i+self.input_len,:])
                 inputs = np.stack(inputs)
@@ -72,33 +69,50 @@ class RNNMusic:
         epoch_loss /= num_files
         return epoch_loss
     
-    def fit(self, sess, saver, folder):
-        if folder[-1] != '/':
-            folder += '/'
-        files = glob.glob(folder + '*')
+    def fit(self, sess, saver, midi_folder, saved_models_folder):
+        files = glob.glob(midi_folder + '*.mid')
+        loss_file = os.path.join(saved_models_folder, 'loss.txt')
         epoch_losses = []
         for i in range(self.num_epochs):
             print('***** Epoch ' + str(i) + ' *****')
             epoch_losses.append(self.run_epoch(sess, files))
-            print('Average loss for this epoch: ' + str(sum(epoch_losses)/len(epoch_losses)))
+            print('Average loss for this epoch: ' + str(epoch_losses[-1]))
             print('Saving model and loss progression for the epoch')
-            with open('../models/shitty_rnn/epoch'+str(i+1)+'.txt', 'w') as f:
-                for loss in epoch_losses:
-                    f.write(str(loss) + '\n')
-            saver.save(sess, '../models/shitty_rnn/epoch'+str(i+1)+'.ckpt')
+            with open(loss_file, 'a') as f:
+                f.write(str(epoch_losses[-1]) + '\n')
+            epoch_folder = 'epoch_'+str(i+1)
+            os.mkdir(os.path.join(saved_models_folder, epoch_folder))
+            saver.save(sess, os.path.join(saved_models_folder, epoch_folder, 'epoch_'+str(i+1)+'.ckpt'))
             print('Model saved')
     
-    def generate(self, start_notes):
-        pass
+    def generate(self, sess, start_notes, num_notes, save_midi_path, model_folder):
+        notes = start_notes
+        for _ in range(num_notes):
+            input = notes[:,-self.input_len:,:]
+            newstate = self.forward_prop()
+            feed_dict = 
+            newstate_np = sess.run()
 
 ###############################################################################
 
 if __name__ == '__main__':
     FOLDER = '../data/rnn_music/'
+    saved_models_folder = '../models/shitty_rnn/'
     with tf.Graph().as_default():
         rnn_music = RNNMusic(num_epochs=2)
         init = tf.global_variables_initializer()
         saver = tf.train.Saver()
         with tf.Session() as sess:
             sess.run(init)
-            rnn_music.fit(sess, saver, FOLDER)
+            rnn_music.fit(sess, saver, FOLDER, saved_models_folder)
+
+###############################################################################
+
+if __name__ == '__main__':
+    tf.reset_default_graph()
+    rnn_music = RNNMusic()
+    saver = tf.train.saver()
+    saved_models_folder = '../models/shitty_rnn/epoch_10/'
+    with tf.Session() as sess:
+        saver.restore(sess, os.path.join(saved_models_folder, '*.ckpt'))
+        

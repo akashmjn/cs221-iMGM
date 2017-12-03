@@ -11,5 +11,6 @@ from . import monte_carlo
 from . import pink_noise 
 from . import evaluation
 from . import constants
+from . import basic_rnn
 
-__all__ = ["midi","monte_carlo","pink_noise","evaluation"]
+__all__ = ["midi","monte_carlo","pink_noise","evaluation","basic_rnn"]
