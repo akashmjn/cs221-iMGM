@@ -98,7 +98,13 @@ def testRNNTrain(input_path,model_path,hparams):
         init = tf.global_variables_initializer()
         saver = tf.train.Saver()
         with tf.Session() as sess:
-            sess.run(init)
+            if hparams.epoch_offset==0:
+                sess.run(init)
+            else:
+                restore_path = os.path.join(model_path,
+                    "epoch_{}".format(hparams.epoch_offset),"checkpoint.ckpt")
+                print("Retraining model from: "+restore_path)
+                saver.restore(sess,restore_path)
             rnn_music.fit(sess, saver, input_path, model_path)   
 
 def testRNNGenerate(model_path,output_path,hparams):
@@ -109,7 +115,7 @@ def testRNNGenerate(model_path,output_path,hparams):
         saver = tf.train.Saver()
         with tf.Session() as sess:
             saver.restore(sess, model_path)
-            rnn_music.generate(sess, 100, output_path)
+            rnn_music.generate(sess, 500, output_path)
   
 
 if __name__ == "__main__":
@@ -134,7 +140,8 @@ if __name__ == "__main__":
     if len(vars(args))== 0:
         raise Exception('Invalid arguments')
 
-    hparams = HParams(input_len=1,rnn_layer_size=32,lr=0.01,num_epochs=50)
+    hparams = HParams(input_len=4,rnn_layer_size=32,lr=0.003,
+        num_epochs=50,epoch_offset=50)
 
     if args.mode=='io':
         # assumes inpath - to a specific file, outpath - folder 
