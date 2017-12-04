@@ -6,7 +6,13 @@ import glob
 # from .evaluation import *
 import src
 import argparse
+import time
+import tensorflow as tf
 from collections import defaultdict
+from tensorflow.contrib.training import HParams
+from collections import namedtuple
+from basic_rnn_akash import RNNMusic
+
 
 def testMonteCarlo(inpath,outpath,order=1):
     mcObj = src.monte_carlo.MonteCarlo(inpath,order=order,epsilon=1.0/8)
@@ -84,12 +90,38 @@ def collectMIDIFiles(source_path,dest_path,suffix):
         count += 1
     print("Copied {} files into {}".format(count,dest_path))
 
+def testRNNTrain(input_path,model_path):
+    hparams = HParams(input_len=1,rnn_layer_size=64,lr=0.01,num_epochs=500)
+    
+    rnn_music = RNNMusic(hparams)
+    graph = rnn_music.build_graph()
+    with graph.as_default():
+        init = tf.global_variables_initializer()
+        saver = tf.train.Saver()
+        with tf.Session() as sess:
+            sess.run(init)
+            rnn_music.fit(sess, saver, input_path, model_path)   
+
+def testRNNGenerate(model_path,output_path):
+    hparams = HParams(input_len=1,rnn_layer_size=64,lr=0.01,num_epochs=500)
+    
+    rnn_music = RNNMusic(hparams)
+    graph = rnn_music.build_graph()   
+    with graph.as_default():
+        saver = tf.train.Saver()
+        with tf.Session() as sess:
+            saver.restore(sess, model_path)
+            rnn_music.generate(sess, 100, output_path)
+  
+
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(description='Run tests on Markov Generator.')
 
     parser.add_argument('-m',dest='mode',default='mkv',
-        help='Selects what scripts to run: io (read/write MIDI) or mkv (train generate melody) or fmidi (to collect midi files)')
+        help='Selects what scripts to run: io (read/write MIDI), \
+        mkv (train generate melody), fmidi (to collect midi files), \
+        trnn (train RNN on folder) or grnn (generate from saved RNN)')
     parser.add_argument('-i',dest='inpath',
         help='Input path: MIDI file for io, Folder for mkv')   
     parser.add_argument('-o',dest='outpath',
@@ -112,3 +144,7 @@ if __name__ == "__main__":
         testMonteCarlo(args.inpath,args.outpath,order=args.order)
     elif args.mode=='fmidi':
         collectMIDIFiles(args.inpath,args.outpath,args.suffix)
+    elif args.mode=='trnn':
+        testRNNTrain(args.inpath,args.outpath)       
+    elif args.mode=='grnn':
+        testRNNGenerate(args.inpath,args.outpath)

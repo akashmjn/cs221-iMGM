@@ -13,5 +13,7 @@ For general infrastructure:
 
 Baseline Char-RNN based sequence generation:
     - TODO: Akash V1 Char-RNN based model (State: same as Markov model (pitch/silence,duration) ) 
+        debugging: 
+            tensorboard: check weights, gradients, distributions
     - TODO: Suraj V1 RNN
     - TODO: Try magenta models on dataset
