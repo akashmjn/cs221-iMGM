@@ -1,5 +1,6 @@
 import tensorflow as tf
 from src.basic_rnn import RNNMusic
+from src.bidirectional_rnn import BidirectionalRNNMusic
 import os
 import glob
 import numpy as np
@@ -10,9 +11,9 @@ import pdb
 input_len = 5
 num_units = 32
 lr = 0.003
-num_epochs = 1000
+num_epochs = 500
 FOLDER = './data/overfit/'
-saved_models_folder = './models/shitty_rnn/'
+saved_models_folder = './models/shitty_birnn/'
 
 # Some stats about the folder
 stats = defaultdict(int)
@@ -38,7 +39,7 @@ with open(os.path.join(saved_models_folder, 'train_stats.txt'),'w') as f:
 
 # Train
 with tf.Graph().as_default():
-    rnn_music = RNNMusic(input_len=input_len, num_units=num_units, lr=lr, num_epochs=num_epochs)
+    rnn_music = BidirectionalRNNMusic(input_len=input_len, num_units=num_units, lr=lr, num_epochs=num_epochs)
     init = tf.global_variables_initializer()
     saver = tf.train.Saver()
     with tf.Session() as sess:
@@ -46,11 +47,11 @@ with tf.Graph().as_default():
         rnn_music.fit(sess, saver, FOLDER, saved_models_folder)
 
 # Test
-num = max([int(val.split('_')[2]) for val in glob.glob('./models/shitty_rnn/epoch_*')])
-saved_models = './models/shitty_rnn/epoch_' + str(num) + '/'
+num = max([int(val.split('_')[2]) for val in glob.glob(saved_models_folder + 'epoch_*')])
+saved_models = saved_models_folder + 'epoch_' + str(num) + '/'
 with tf.Graph().as_default():
-    rnn_music = RNNMusic(input_len=input_len, num_units=num_units, lr=lr, num_epochs=num)
+    rnn_music = BidirectionalRNNMusic(input_len=input_len, num_units=num_units, lr=lr, num_epochs=num)
     saver = tf.train.Saver()
     with tf.Session() as sess:
         saver.restore(sess, os.path.join(saved_models, 'epoch_' + str(num) + '.ckpt'))
-        rnn_music.generate(sess, 100, './models/shitty_rnn/test_output.mid', os.path.join(saved_models_folder, 'test_stats.txt'))
+        rnn_music.generate(sess, 100, saved_models_folder + 'test_argmax_output.mid', os.path.join(saved_models_folder, 'test_stats.txt'))

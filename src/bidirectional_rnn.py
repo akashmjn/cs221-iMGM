@@ -10,7 +10,7 @@ from collections import defaultdict
 
 ###############################################################################
 
-class RNNMusic:
+class BidirectionalRNNMusic:
     def __init__(self, input_len=5, num_units=16, lr=0.001, num_epochs=10):
         self.input_len = input_len
         self.num_units = num_units
@@ -36,9 +36,11 @@ class RNNMusic:
         return feed_dict
     
     def forward_prop(self):
-        lstm_cell = tf.contrib.rnn.LSTMCell(num_units=self.num_units, initializer=tf.contrib.layers.xavier_initializer(), activation=tf.nn.relu)
-        output, state = tf.nn.dynamic_rnn(lstm_cell, self.inputs, dtype=tf.float32)
-        final_output = output[:,-1,:]
+        forward_lstm_cell = tf.contrib.rnn.LSTMCell(num_units=self.num_units, initializer=tf.contrib.layers.xavier_initializer(), activation=tf.nn.relu)
+        backward_lstm_cell = tf.contrib.rnn.LSTMCell(num_units=self.num_units, initializer=tf.contrib.layers.xavier_initializer(), activation=tf.nn.relu)
+        outputs, states = tf.nn.bidirectional_dynamic_rnn(forward_lstm_cell, backward_lstm_cell, self.inputs, dtype=tf.float32)
+        forward_output, backward_output = outputs[0][:,-1,:], outputs[1][:,-1,:]
+        final_output = tf.reshape(tf.stack([forward_output, backward_output]), shape=[-1,2*self.num_units])
         newscore = tf.contrib.layers.fully_connected(final_output, 128, activation_fn=None)
         return newscore
     
