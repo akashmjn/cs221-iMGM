@@ -12,7 +12,7 @@ from collections import defaultdict
 from tensorflow.contrib.training import HParams
 from collections import namedtuple
 from basic_rnn_akash import RNNMusic
-
+from chord_rnn import ChordRNN
 
 def testMonteCarlo(inpath,outpath,order=1):
     mcObj = src.monte_carlo.MonteCarlo(inpath,order=order,epsilon=1.0/8)
