@@ -7,9 +7,11 @@ from . import constants
 MarkovChordState = namedtuple('MarkovState',['chord','duration'])
 
 class Sequence(object):
-    def __init__(self, epsilon = 1.0 / 4):
+    def __init__(self, filepath = None, epsilon = 1.0 / 4):
         self.sequence = []
         self.epsilon = epsilon # default 16th note i.e. 1/4 quarter notes
+        if filepath:
+            self.load_midi(filepath)
 
     def __len__(self):
         return len(self.sequence)
@@ -200,25 +202,24 @@ class Sequence(object):
     #         vec[pitch] = 1
     #     return vec
 
-    def to_chord_list(self, one_hot = False):
-        if not self.sequence:
-            return []
+    # def to_chord_list(self, one_hot = False):
+    #     if not self.sequence:
+    #         return []
 
-        chord_sequence = [MarkovChordState(self.vec_to_chord(self.sequence[0], one_hot = one_hot), 0)]
+    #     chord_sequence = [MarkovChordState(self.vec_to_chord(self.sequence[0], one_hot = one_hot), 0)]
 
-        for many_hot_state in self.sequence:
-            state_chord = self.vec_to_chord(many_hot_state, one_hot = one_hot)
-            current_chord, duration = chord_sequence[-1]
-            if current_chord == state_chord:
-                chord_sequence[-1].duration += 1
-            else:
-                chord_sequence.append(MarkovChordState(state_chord, 1))
+    #     for many_hot_state in self.sequence:
+    #         state_chord = self.vec_to_chord(many_hot_state, one_hot = one_hot)
+    #         current_chord, duration = chord_sequence[-1]
+    #         if current_chord == state_chord:
+    #             chord_sequence[-1].duration += 1
+    #         else:
+    #             chord_sequence.append(MarkovChordState(state_chord, 1))
 
-        return chord_sequence
+    #     return chord_sequence
 
 def test_sequence_class(filepath = "../data/example.mid"):
     seq = Sequence(filepath)
-    seq.load_midi(filepath)
     seq.many_hot_to_midi(filepath[:-4] + "-merged.mid")
     # seq.chords_to_midi(filepath[:-4] + "-chords-merged.mid")
 
