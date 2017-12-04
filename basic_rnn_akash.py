@@ -95,11 +95,10 @@ class RNNMusic:
         files = glob.glob(midi_folder + '*.mid')
         loss_file = os.path.join(saved_models_folder, 'loss.txt')
         epoch_losses = []
-        for i in range(self.hparams.num_epochs):
+        for i in range(1,self.hparams.num_epochs+1):
             print('***** Epoch ' + str(i) + ' *****')
             epoch_losses.append(self.run_epoch(sess, files))
             print('Average loss for this epoch: ' + str(epoch_losses[-1]))
-            print('Saving model and loss progression for the epoch')
             with open(loss_file, 'a') as f:
                 f.write(str(epoch_losses[-1]) + '\n')
 
@@ -107,9 +106,9 @@ class RNNMusic:
             # summ = sess.run(summaries,{}) 
             # writer.add_summary(summ, i)                  
 
-            epoch_folder = 'epoch_'+str(i+1)
-            if i==(self.hparams.num_epochs-1):
-                # os.mkdir(os.path.join(saved_models_folder, epoch_folder))
+            epoch_folder = 'epoch_'+str(i)
+            if i%5==0:
+                print('Saving model and loss progression for the epoch')
                 saver.save(sess,os.path.join(saved_models_folder,epoch_folder,'checkpoint.ckpt'))
                 print('Model saved')
     

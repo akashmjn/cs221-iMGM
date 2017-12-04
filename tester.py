@@ -90,8 +90,7 @@ def collectMIDIFiles(source_path,dest_path,suffix):
         count += 1
     print("Copied {} files into {}".format(count,dest_path))
 
-def testRNNTrain(input_path,model_path):
-    hparams = HParams(input_len=1,rnn_layer_size=64,lr=0.01,num_epochs=500)
+def testRNNTrain(input_path,model_path,hparams):
     
     rnn_music = RNNMusic(hparams)
     graph = rnn_music.build_graph()
@@ -102,8 +101,7 @@ def testRNNTrain(input_path,model_path):
             sess.run(init)
             rnn_music.fit(sess, saver, input_path, model_path)   
 
-def testRNNGenerate(model_path,output_path):
-    hparams = HParams(input_len=1,rnn_layer_size=64,lr=0.01,num_epochs=500)
+def testRNNGenerate(model_path,output_path,hparams):
     
     rnn_music = RNNMusic(hparams)
     graph = rnn_music.build_graph()   
@@ -136,6 +134,8 @@ if __name__ == "__main__":
     if len(vars(args))== 0:
         raise Exception('Invalid arguments')
 
+    hparams = HParams(input_len=1,rnn_layer_size=32,lr=0.01,num_epochs=50)
+
     if args.mode=='io':
         # assumes inpath - to a specific file, outpath - folder 
         testAllIO(args.inpath,args.outpath)    
@@ -145,6 +145,6 @@ if __name__ == "__main__":
     elif args.mode=='fmidi':
         collectMIDIFiles(args.inpath,args.outpath,args.suffix)
     elif args.mode=='trnn':
-        testRNNTrain(args.inpath,args.outpath)       
+        testRNNTrain(args.inpath,args.outpath,hparams)       
     elif args.mode=='grnn':
-        testRNNGenerate(args.inpath,args.outpath)
+        testRNNGenerate(args.inpath,args.outpath,hparams)
