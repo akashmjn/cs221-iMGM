@@ -1,6 +1,7 @@
 import numpy as np
 from . import pretty_midi
 from . import constants
+from collections import namedtuple
 # import mingus.core.chords as mingus_chords
 # import mingus.core.notes as mingus_notes
 
@@ -103,7 +104,7 @@ class Sequence(object):
                 self.add(self.note_2_vec())
 
             # Add note data to each of the vectors from start to end index.
-            for i in range(start_idx, end_idx + 1):
+            for i in range(start_idx, end_idx):
                 if i < len(self):
                     self.sequence[i] = self.note_2_vec(note_data, self.sequence[i])
                 else:
