@@ -20,9 +20,7 @@ class RNNMusic:
     
     def build(self):
         self.add_placeholders()
-        self.lstm_cell = tf.contrib.rnn.LSTMCell(num_units=self.num_units, initializer=tf.contrib.layers.xavier_initializer(), activation=tf.nn.leaky_relu)
-        # self.lstm_cell = tf.contrib.rnn.BasicLSTMCell(num_units=self.num_units, activation=tf.nn.relu)
-        self.newstate = self.forward_prop()
+        self.newscore = self.forward_prop()
         self.loss = self.add_loss_op()
         self.train_op = self.add_train_op()
     
@@ -38,20 +36,16 @@ class RNNMusic:
         return feed_dict
     
     def forward_prop(self):
-        # lstm_cell = tf.contrib.rnn.LSTMCell(num_units=self.num_units, initializer=tf.contrib.layers.xavier_initializer(), activation=tf.nn.relu)
         # lstm_cell = tf.contrib.rnn.BasicLSTMCell(num_units=self.num_units, activation=tf.nn.relu)
-        output, state = tf.nn.dynamic_rnn(self.lstm_cell, self.inputs, dtype=tf.float32)
+        lstm_cell = tf.contrib.rnn.LSTMCell(num_units=self.num_units, initializer=tf.contrib.layers.xavier_initializer(), activation=tf.nn.relu)
+        output, state = tf.nn.dynamic_rnn(lstm_cell, self.inputs, dtype=tf.float32)
         final_output = output[:,-1,:]
         newscore = tf.contrib.layers.fully_connected(final_output, 128, activation_fn=None)
-        newstate = tf.nn.softmax(newscore)
-        return newstate
+        # newstate = tf.nn.softmax(newscore)
+        return newscore
     
     def add_loss_op(self):
-        # preds = tf.argmax(self.newstate, axis=1)
-        # notes = tf.argmax(self.labels, axis=1)
-        # mult = tf.cast(tf.abs(preds - notes), dtype=tf.float32)
-        loss = tf.reduce_mean(tf.losses.softmax_cross_entropy(onehot_labels=self.labels, logits=self.newstate))
-        # loss = tf.reduce_mean(tf.nn.softmax_cross_entropy(labels=self.labels, logits=self.newstate))
+        loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(labels=self.labels, logits=self.newscore))
         return loss
     
     def add_train_op(self):
@@ -94,21 +88,30 @@ class RNNMusic:
             print('Saving model and loss progression for the epoch')
             with open(loss_file, 'a') as f:
                 f.write(str(epoch_losses[-1]) + '\n')
-            epoch_folder = 'epoch_'+str(i+1)
-            os.mkdir(os.path.join(saved_models_folder, epoch_folder))
-            saver.save(sess, os.path.join(saved_models_folder, epoch_folder, 'epoch_'+str(i+1)+'.ckpt'))
-            print('Model saved')
+            if i > 200 and sum(epoch_losses[-6:]) < 3:
+                epoch_folder = 'epoch_'+str(i+1)
+                os.mkdir(os.path.join(saved_models_folder, epoch_folder))
+                saver.save(sess, os.path.join(saved_models_folder, epoch_folder, 'epoch_'+str(i+1)+'.ckpt'))
+                print('Model saved')
+                break
+            if (i+1)%100 == 0 or i==0:
+                epoch_folder = 'epoch_'+str(i+1)
+                os.mkdir(os.path.join(saved_models_folder, epoch_folder))
+                saver.save(sess, os.path.join(saved_models_folder, epoch_folder, 'epoch_'+str(i+1)+'.ckpt'))
+                print('Model saved')
     
     def generate(self, sess, num_notes, save_midi_path, stats_path):
         notes = np.zeros((1,self.input_len,128))
         for i in range(self.input_len):
-            notes[0,i,np.random.randint(30,90)] = 1
+            notes[0,i,np.random.randint(36,85)] = 1
         for _ in range(num_notes):
             input = notes[:,-self.input_len:,:]
             feed_dict = self.create_feed_dict(inputs=input)
-            newstate_np = sess.run(self.newstate, feed_dict=feed_dict)
-            newstate_onehot = np.zeros(newstate_np.shape)
-            newstate_onehot[0,np.argmax(newstate_np)] = 1
+            newscore = sess.run(tf.nn.softmax(self.newscore), feed_dict=feed_dict)
+            print(str(np.argmax(newscore)) + ': ' + str(np.max(newscore)))
+            newstate_onehot = np.zeros(newscore.shape)
+            new_note = np.random.choice(np.arange(0,128), p=newscore.flatten())
+            newstate_onehot[0,new_note] = 1
             notes_temp = np.vstack((notes[0,:,:], newstate_onehot))
             notes = notes_temp.reshape(1,notes_temp.shape[0],notes_temp.shape[1])
         matrix_to_midi(notes.reshape(notes.shape[1],notes.shape[2]), save_midi_path)
