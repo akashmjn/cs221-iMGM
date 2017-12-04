@@ -1,6 +1,7 @@
 import tensorflow as tf
 from src.basic_rnn import RNNMusic
 from src.bidirectional_rnn import BidirectionalRNNMusic
+from src.stacked_rnn import StackedRNNMusic
 import os
 import glob
 import numpy as np
@@ -9,11 +10,11 @@ from collections import defaultdict
 import pdb
 
 input_len = 5
-num_units = 32
+num_units = [16, 32]
 lr = 0.003
 num_epochs = 500
 FOLDER = './data/overfit/'
-saved_models_folder = './models/shitty_birnn/'
+saved_models_folder = './models/shitty_stackedrnn/'
 
 # Some stats about the folder
 stats = defaultdict(int)
@@ -39,7 +40,7 @@ with open(os.path.join(saved_models_folder, 'train_stats.txt'),'w') as f:
 
 # Train
 with tf.Graph().as_default():
-    rnn_music = BidirectionalRNNMusic(input_len=input_len, num_units=num_units, lr=lr, num_epochs=num_epochs)
+    rnn_music = StackedRNNMusic(input_len=input_len, num_units=num_units, lr=lr, num_epochs=num_epochs)
     init = tf.global_variables_initializer()
     saver = tf.train.Saver()
     with tf.Session() as sess:
@@ -50,7 +51,7 @@ with tf.Graph().as_default():
 num = max([int(val.split('_')[2]) for val in glob.glob(saved_models_folder + 'epoch_*')])
 saved_models = saved_models_folder + 'epoch_' + str(num) + '/'
 with tf.Graph().as_default():
-    rnn_music = BidirectionalRNNMusic(input_len=input_len, num_units=num_units, lr=lr, num_epochs=num)
+    rnn_music = StackedRNNMusic(input_len=input_len, num_units=num_units, lr=lr, num_epochs=num)
     saver = tf.train.Saver()
     with tf.Session() as sess:
         saver.restore(sess, os.path.join(saved_models, 'epoch_' + str(num) + '.ckpt'))
