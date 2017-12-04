@@ -12,6 +12,6 @@ from . import pink_noise
 from . import evaluation
 from . import constants
 from . import basic_rnn
-from . import sequence
+# from . import sequence
 
 __all__ = ["midi","monte_carlo","pink_noise","evaluation","basic_rnn"]
