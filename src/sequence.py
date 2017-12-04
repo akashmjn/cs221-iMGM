@@ -1,8 +1,8 @@
-from .constants import NUM_POSSIBLE_NOTES, OCTAVE, SILENCE
 import numpy as np
 from . import pretty_midi
-import mingus.core.chords as mingus_chords
-import mingus.core.notes as mingus_notes
+from . import constants
+# import mingus.core.chords as mingus_chords
+# import mingus.core.notes as mingus_notes
 
 MarkovChordState = namedtuple('MarkovState',['chord','duration'])
 
@@ -90,7 +90,7 @@ class Sequence(object):
 
     def note_2_vec(self, note_data = None, vec = np.array([])):
         if not vec.any():
-            vec = np.zeros(NUM_POSSIBLE_NOTES, np.int32)
+            vec = np.zeros(constants.NUM_POSSIBLE_NOTES, np.int32)
         if note_data:
             vec[note_data.pitch] = 1
         return vec
@@ -143,28 +143,28 @@ class Sequence(object):
         midi_data.instruments.append(track)
         midi_data.write(midi_path)
 
-    def chords_to_midi(self, midi_path, beat_length = 0.5, instrument_name = "Cello", velocity = 100, one_hot = False):
-        """
-        As in .midi, converts sequence back to MIDI for output.
-        """
-        midi_data = pretty_midi.PrettyMIDI()
-        instrument_program = pretty_midi.instrument_name_to_program(instrument_name)
-        track = pretty_midi.Instrument(program=instrument_program)
+    # def chords_to_midi(self, midi_path, beat_length = 0.5, instrument_name = "Cello", velocity = 100, one_hot = False):
+    #     """
+    #     As in .midi, converts sequence back to MIDI for output.
+    #     """
+    #     midi_data = pretty_midi.PrettyMIDI()
+    #     instrument_program = pretty_midi.instrument_name_to_program(instrument_name)
+    #     track = pretty_midi.Instrument(program=instrument_program)
 
-        chord_sequence = self.to_chord_list()
-        unit_length = beat_length * self.epsilon
+    #     chord_sequence = self.to_chord_list()
+    #     unit_length = beat_length * self.epsilon
 
-        starting_time = 0
-        for chord, duration in chord_sequence:
-            vec = self.chord_to_vec(chord, one_hot = one_hot)
-            for pitch in np.nonzero(vec)[0]:
-                note = pretty_midi.Note(
-                    velocity=velocity, pitch=pitch, start=starting_time, end=starting_time + duration * unit_length)
-                track.notes.append(note)
-            starting_time += duration * unit_length
+    #     starting_time = 0
+    #     for chord, duration in chord_sequence:
+    #         vec = self.chord_to_vec(chord, one_hot = one_hot)
+    #         for pitch in np.nonzero(vec)[0]:
+    #             note = pretty_midi.Note(
+    #                 velocity=velocity, pitch=pitch, start=starting_time, end=starting_time + duration * unit_length)
+    #             track.notes.append(note)
+    #         starting_time += duration * unit_length
 
-        midi_data.instruments.append(track)
-        midi_data.write(midi_path)
+    #     midi_data.instruments.append(track)
+    #     midi_data.write(midi_path)
 
     def from_matrix(self, matrix):
         self.reset()
@@ -174,31 +174,31 @@ class Sequence(object):
     def to_matrix(self):
         return np.asmatrix(self.sequence)
 
-    def vec_to_chord(self, vec, one_hot = False):
-        base_pitches = [pitch % NUM_NOTES_IN_OCTAVE for pitch in np.nonzero(vec)[0]]
-        base_notes = [mingus_notes.int_to_note(base_pitch) for base_pitch in base_pitches]
+    # def vec_to_chord(self, vec, one_hot = False):
+    #     base_pitches = [pitch % constants.OCTAVE for pitch in np.nonzero(vec)[0]]
+    #     base_notes = [mingus_notes.int_to_note(base_pitch) for base_pitch in base_pitches]
 
-        if len(base_pitches) == 0:
-            return SILENCE # SILENCE
-        if one_hot: # Pick the highest pitch to get a one-hot representation.
-            base_notes = [base_notes[-1]]
-        return mingus_chords.determine(base_notes, True)[0]
+    #     if len(base_pitches) == 0:
+    #         return constants.SILENCE # SILENCE
+    #     if one_hot: # Pick the highest pitch to get a one-hot representation.
+    #         base_notes = [base_notes[-1]]
+    #     return mingus_chords.determine(base_notes, True)[0]
 
-    def chord_to_vec(self, chord, one_hot = False):
-        vec = self.note_2_vec()
+    # def chord_to_vec(self, chord, one_hot = False):
+    #     vec = self.note_2_vec()
 
-        if chord == SILENCE:
-            return vec
+    #     if chord == constants.SILENCE:
+    #         return vec
 
-        base_notes = mingus_chords.from_shorthand(chord)
-        base_pitches = sorted(set([mingus_notes.int_to_note(base_pitch) for base_note in base_notes]))
+    #     base_notes = mingus_chords.from_shorthand(chord)
+    #     base_pitches = sorted(set([mingus_notes.int_to_note(base_pitch) for base_note in base_notes]))
 
-        if one_hot:
-            base_pitches = [base_pitches[-1]]
+    #     if one_hot:
+    #         base_pitches = [base_pitches[-1]]
 
-        for pitch in base_pitches:
-            vec[pitch] = 1
-        return vec
+    #     for pitch in base_pitches:
+    #         vec[pitch] = 1
+    #     return vec
 
     def to_chord_list(self, one_hot = False):
         if not self.sequence:
@@ -220,6 +220,7 @@ def test_sequence_class(filepath = "../data/example.mid"):
     seq = Sequence(filepath)
     seq.load_midi(filepath)
     seq.many_hot_to_midi(filepath[:-4] + "-merged.mid")
+    # seq.chords_to_midi(filepath[:-4] + "-chords-merged.mid")
 
 if __name__ == "__main__":
     test_sequence_class()
