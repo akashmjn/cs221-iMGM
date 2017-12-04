@@ -134,14 +134,24 @@ if __name__ == "__main__":
         help='Order of markov process. Problematic beyond 2')         
     parser.add_argument('--suffix',dest='suffix',default='*.mid',
         help='File suffix to collect. Defaults to *.mid')            
+    parser.add_argument('--lr',dest='lr',type=float,
+        help='Initial learning rate')                     
+    parser.add_argument('--inputLen',dest='input_len',type=int,default=4,
+        help='Number of x steps processed to generate output')                           
+    parser.add_argument('--layerSize',dest='rnn_layer_size',type=int,default=36,
+        help='Size of hidden layer h in RNN')                        
+    parser.add_argument('--nepochs',dest='num_epochs',type=int,default=50,
+        help='Number of epochs to start training from')                  
+    parser.add_argument('--epochOffset',dest='epoch_offset',type=int,default=0,
+        help='Offset of epochs to start training from')               
 
     args = parser.parse_args()
     print(args)
     if len(vars(args))== 0:
         raise Exception('Invalid arguments')
 
-    hparams = HParams(input_size=129,input_len=4,rnn_layer_size=32,lr=0.0004,
-        num_epochs=50,epoch_offset=0)
+    hparams = HParams(input_size=129,input_len=args.input_len,rnn_layer_size=args.rnn_layer_size,
+        lr=args.lr,num_epochs=args.num_epochs,epoch_offset=args.epoch_offset,epsilon=1.0/4)
 
     if args.mode=='io':
         # assumes inpath - to a specific file, outpath - folder 

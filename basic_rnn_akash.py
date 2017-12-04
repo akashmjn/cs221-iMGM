@@ -74,7 +74,7 @@ class RNNMusic:
         # iterate over files, read in as sequence object
         # create batches in RNN representation (one/many hot) train
         for file in files:
-            sequence = Sequence()
+            sequence = Sequence(epsilon=self.hparams.epsilon)
             sequence.load_midi(file,join_tracks=False)
             if sequence is None or len(sequence)<self.hparams.input_len+1:
                 continue
@@ -90,10 +90,24 @@ class RNNMusic:
                 epoch_loss += self.train_batch(sess, inputs, labels)
         epoch_loss /= num_files
         return epoch_loss
-    
+
+    def _write_to_line_file(self,metric_file,metric,epoch_num):
+        line_no = epoch_num-1
+        with open(metric_file, 'r+') as f:
+           lines = f.readlines()
+           # check if line encountered and overwrite from that point onwards
+           if len(lines)!=0 and line_no <= (len(lines)-1):
+               lines.insert(line_no,str(metric)+'\n')
+               del lines[line_no+1:]   # truncates the file
+           else:
+               lines.append(str(metric)+'\n')
+           # if line not overwritten, append to end
+           f.seek(0)   # moves the pointer to the start of the file
+           f.writelines(lines)        
+
     def fit(self, sess, saver, midi_folder, saved_models_folder):
         # tensorboard initialization
-        # log_dir = os.path.join(saved_models_folder,'logs')
+        log_dir = os.path.join(saved_models_folder,'logs')
         # summaries = tf.summary.merge_all()
         # writer = tf.summary.FileWriter(
         #         os.path.join(log_dir, time.strftime("%Y-%m-%d-%H-%M-%S")))
@@ -111,8 +125,10 @@ class RNNMusic:
             print('***** Epoch ' + str(true_i) + ' *****')
             epoch_losses.append(self.run_epoch(sess, files)) # runs the actual training
             print('Average loss for this epoch: ' + str(epoch_losses[-1]))
-            with open(loss_file, 'a') as f:
-                f.write(str(epoch_losses[-1]) + '\n')
+            # append loss to file
+            self._write_to_line_file(loss_file,epoch_losses[-1],true_i)
+            # with open(loss_file, 'a') as f:
+            #     f.write(str(epoch_losses[-1]) + '\n')
 
             # # instrument for tensorboard
             # summ = sess.run(summaries,{}) 
@@ -128,7 +144,7 @@ class RNNMusic:
 
         # initialize sequence object with starting sequence (required for next state)
         # notes = np.zeros((1,self.hparams.input_len,hparams.input_size))
-        note_sequence = Sequence()
+        note_sequence = Sequence(epsilon=self.hparams.epsilon)
         for i in range(self.hparams.input_len):
             row = np.zeros(self.hparams.input_size)
             row[np.random.randint(60,72)] = 1
