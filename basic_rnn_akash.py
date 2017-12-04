@@ -48,7 +48,10 @@ class RNNMusic:
         return loss
     
     def add_train_op(self):
-        train_op = tf.train.AdamOptimizer(self.hparams.lr).minimize(self.loss)
+        optimizer = tf.train.AdamOptimizer(self.hparams.lr)
+        gradvs = optimizer.compute_gradients(self.loss)
+        clipped_grads = [(tf.clip_by_norm(grad, 1.), var) for grad, var in gradvs] 
+        train_op = optimizer.apply_gradients(clipped_grads) 
         return train_op
     ## end initialization ##
 

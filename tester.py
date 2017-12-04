@@ -140,7 +140,7 @@ if __name__ == "__main__":
     if len(vars(args))== 0:
         raise Exception('Invalid arguments')
 
-    hparams = HParams(input_size=129,input_len=4,rnn_layer_size=32,lr=0.0001,
+    hparams = HParams(input_size=129,input_len=4,rnn_layer_size=32,lr=0.0004,
         num_epochs=50,epoch_offset=0)
 
     if args.mode=='io':
