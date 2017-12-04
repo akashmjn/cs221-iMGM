@@ -6,6 +6,20 @@ from . import constants
 
 MarkovChordState = namedtuple('MarkovState',['chord','duration'])
 
+'''
+Sequence (class)
+
+Usage:
+    from src import sequence
+    in_midi_path, out_midi_path = "in_garbage.mid", "out_something.mid"
+    seq = sequence.Sequence(in_midi_path)
+    np_matrix = seq.to_matrix()
+    # np_matrix.shape == (len(seq), 129), use however you like
+    output_matrix = eval_model() # run some model to get a matrix of size (t x 129)
+    output_seq = sequence.Sequence()
+    output_seq.from_matrix(output_matrix)
+    output_seq.many_hot_to_midi(out_midi_path)
+'''
 class Sequence(object):
     def __init__(self, filepath = None, epsilon = 1.0 / 4):
         self.sequence = []
@@ -30,6 +44,12 @@ class Sequence(object):
         self.sequence.append(row)
 
     def get_beat_range(self, note_data, beat_length):
+        '''
+        @param note_data the note to find its range in the sequence
+        @param beat_length the length of the current beat (length of a current note)
+
+        @return (start_index, end_index) the inclusive indices in the sequence where this note belongs.
+        '''
         unit_length = beat_length * self.epsilon
         start_index = int(note_data.start / unit_length)
         end_index = int(note_data.end / unit_length)
@@ -38,14 +58,15 @@ class Sequence(object):
     def load_midi(self, midi_path, join_tracks = True):
         """
         Similar to functions in .midi, picks track with most notes and processes
-        However, the representation here is a list of states. Each state can represent
-        a (note/pause) along with its duration.
+        However, the representation here is a list of states. 
+        Each state can represent a chord at a timestep (many hot matrix).
         Durations are calculated as a ratio of the beat (a quarter note), by roughy matching notes
         to beats (from pretty_midi) in case tempo changes midway 
         Checks for gaps between notes and adds those as states. If there are many concurrent notes/chords
-        it will arbitrarily pick notes and make it monophonic. #TODO: this might be improvable
+        it will arbitrarily pick notes and make it monophonic.
 
         @param midi_path: namesake, input file
+        @param join_tracks: whether to use all tracks in the midi file as one track
         """
         # get data from MIDI file
         try:
@@ -82,7 +103,7 @@ class Sequence(object):
                 self.add(self.note_2_vec())
 
             # Add note data to each of the vectors from start to end index.
-            for i in range(start_idx, end_idx):
+            for i in range(start_idx, end_idx + 1):
                 if i < len(self):
                     self.sequence[i] = self.note_2_vec(note_data, self.sequence[i])
                 else:
@@ -91,15 +112,32 @@ class Sequence(object):
         return True
 
     def note_2_vec(self, note_data = None, vec = np.array([])):
+        '''
+        Helper function.
+        Creates a one-hot 1D np array of the note passed in.
+
+        @param note_data instance of pretty_midi.Note
+        @param vec a previous vector (this allows us to store chords in one vector)
+
+        @return one-hot vector of size 128 (or many-hot if vec is not None)
+        '''
         if not vec.any():
-            vec = np.zeros(constants.NUM_POSSIBLE_NOTES, np.int32)
+            vec = np.zeros(constants.NUM_POSSIBLE_NOTES + 1, np.int32)
         if note_data:
             vec[note_data.pitch] = 1
+        else:
+            vec[-1] = 1
         return vec
 
     def many_hot_to_midi(self, midi_path, beat_length = 0.5, instrument_name = "Cello", velocity = 100, one_hot = False):
         """
         As in .midi, converts sequence back to MIDI for output.
+
+        @param midi_path the midi path where the output goes
+        @param beat_length the length of a quarter note
+        @param instrument_name the name of the instrument used in output
+        @param velocity the velocity of each note
+        @param one_hot whether to pick the highest note or using chords
         """
         midi_data = pretty_midi.PrettyMIDI()
         instrument_program = pretty_midi.instrument_name_to_program(instrument_name)
@@ -112,6 +150,8 @@ class Sequence(object):
         for many_hot_state in self.sequence:
 
             timestep_pitches = set(np.nonzero(many_hot_state)[0])
+            if 128 in timestep_pitches: timestep_pitches.remove(128) # Don't use silence in our outputs.
+
             if one_hot: # Pick the highest pitch to get a one-hot representation.
                 timestep_pitches = set(max(timestep_pitches))
             processed_pitches = set()
@@ -145,6 +185,24 @@ class Sequence(object):
         midi_data.instruments.append(track)
         midi_data.write(midi_path)
 
+    def from_matrix(self, matrix):
+        '''
+        Takes in a (t x (NUM_POSSIBLE_NOTES + 1)) matrix and puts it into a sequence list.
+
+        @param numpy matrix (t x (NUM_POSSIBLE_NOTES + 1))
+        '''
+        self.reset()
+        for row in matrix:
+            self.add(row[0])
+
+    def to_matrix(self):
+        '''
+        Converts the underlying sequence to a (len(self) x (NUM_POSSIBLE_NOTES + 1)) matrix
+
+        @return numpy matrix (len(self) x x (NUM_POSSIBLE_NOTES + 1))
+        '''
+        return np.asmatrix(self.sequence)
+
     # def chords_to_midi(self, midi_path, beat_length = 0.5, instrument_name = "Cello", velocity = 100, one_hot = False):
     #     """
     #     As in .midi, converts sequence back to MIDI for output.
@@ -167,14 +225,6 @@ class Sequence(object):
 
     #     midi_data.instruments.append(track)
     #     midi_data.write(midi_path)
-
-    def from_matrix(self, matrix):
-        self.reset()
-        for row in matrix:
-            self.add(row[0])
-
-    def to_matrix(self):
-        return np.asmatrix(self.sequence)
 
     # def vec_to_chord(self, vec, one_hot = False):
     #     base_pitches = [pitch % constants.OCTAVE for pitch in np.nonzero(vec)[0]]
@@ -221,7 +271,6 @@ class Sequence(object):
 def test_sequence_class(filepath = "../data/example.mid"):
     seq = Sequence(filepath)
     seq.many_hot_to_midi(filepath[:-4] + "-merged.mid")
-    # seq.chords_to_midi(filepath[:-4] + "-chords-merged.mid")
 
 if __name__ == "__main__":
     test_sequence_class()
