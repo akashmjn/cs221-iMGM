@@ -92,7 +92,7 @@ def collectMIDIFiles(source_path,dest_path,suffix):
 
 def testRNNTrain(input_path,model_path,hparams):
     
-    rnn_music = RNNMusic(hparams)
+    rnn_music = ChordRNN(hparams)
     graph = rnn_music.build_graph()
     with graph.as_default():
         init = tf.global_variables_initializer()
@@ -109,7 +109,7 @@ def testRNNTrain(input_path,model_path,hparams):
 
 def testRNNGenerate(model_path,output_path,hparams):
     
-    rnn_music = RNNMusic(hparams)
+    rnn_music = ChordRNN(hparams)
     graph = rnn_music.build_graph()   
     with graph.as_default():
         saver = tf.train.Saver()
@@ -127,23 +127,23 @@ if __name__ == "__main__":
         mkv (train generate melody), fmidi (to collect midi files), \
         trnn (train RNN on folder) or grnn (generate from saved RNN)')
     parser.add_argument('-i',dest='inpath',
-        help='Input path: MIDI file for io, Folder for mkv')   
+        help='Input path: MIDI file for io, Folder for mkv')
     parser.add_argument('-o',dest='outpath',
-        help='Output path: Folder for io, MIDI file for mkv')      
+        help='Output path: Folder for io, MIDI file for mkv')
     parser.add_argument('--order',dest='order',type=int,default=1,
-        help='Order of markov process. Problematic beyond 2')         
+        help='Order of markov process. Problematic beyond 2')
     parser.add_argument('--suffix',dest='suffix',default='*.mid',
-        help='File suffix to collect. Defaults to *.mid')            
+        help='File suffix to collect. Defaults to *.mid')
     parser.add_argument('--lr',dest='lr',type=float,
-        help='Initial learning rate')                     
+        help='Initial learning rate')
     parser.add_argument('--inputLen',dest='input_len',type=int,default=4,
-        help='Number of x steps processed to generate output')                           
+        help='Number of x steps processed to generate output')
     parser.add_argument('--layerSize',dest='rnn_layer_size',type=int,default=36,
-        help='Size of hidden layer h in RNN')                        
+        help='Size of hidden layer h in RNN')
     parser.add_argument('--nepochs',dest='num_epochs',type=int,default=50,
-        help='Number of epochs to start training from')                  
+        help='Number of epochs to start training from')
     parser.add_argument('--epochOffset',dest='epoch_offset',type=int,default=0,
-        help='Offset of epochs to start training from')               
+        help='Offset of epochs to start training from')
 
     args = parser.parse_args()
     print(args)
@@ -151,7 +151,7 @@ if __name__ == "__main__":
         raise Exception('Invalid arguments')
 
     hparams = HParams(input_size=129,input_len=args.input_len,rnn_layer_size=args.rnn_layer_size,
-        lr=args.lr,num_epochs=args.num_epochs,epoch_offset=args.epoch_offset,epsilon=1.0/4)
+        lr=args.lr,num_epochs=args.num_epochs,epoch_offset=args.epoch_offset,epsilon=1.0/4,num_note_lr=1)
 
     if args.mode=='io':
         # assumes inpath - to a specific file, outpath - folder 

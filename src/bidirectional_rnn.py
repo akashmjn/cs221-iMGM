@@ -110,8 +110,8 @@ class BidirectionalRNNMusic:
             newscore = sess.run(tf.nn.softmax(self.newscore), feed_dict=feed_dict)
             print(str(np.argmax(newscore)) + ': ' + str(np.max(newscore)))
             newstate_onehot = np.zeros(newscore.shape)
-            # new_note = np.random.choice(np.arange(0,128), p=newscore.flatten())
-            new_note = np.argmax(newscore)
+            new_note = np.random.choice(np.arange(0,128), p=newscore.flatten())
+            # new_note = np.argmax(newscore)
             newstate_onehot[0,new_note] = 1
             notes_temp = np.vstack((notes[0,:,:], newstate_onehot))
             notes = notes_temp.reshape(1,notes_temp.shape[0],notes_temp.shape[1])

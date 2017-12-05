@@ -36,11 +36,10 @@ class ChordRNN:
         self.labels = tf.placeholder(shape=(None,self.hparams.input_size), dtype=tf.float32)
     
     def add_forward(self):
-        lstm_cell = tf.contrib.rnn.BasicLSTMCell(num_units=self.hparams.rnn_layer_size,
-         activation=tf.nn.relu)
+        # lstm_cell = tf.contrib.rnn.BasicLSTMCell(num_units=self.hparams.rnn_layer_size, activation=tf.nn.relu)
+        lstm_cell = tf.contrib.rnn.LSTMCell(num_units=self.hparams.rnn_layer_size, initializer=tf.contrib.layers.xavier_initializer(), activation=tf.nn.relu)
         output, state = tf.nn.dynamic_rnn(lstm_cell, self.inputs, dtype=tf.float32)
         final_output = output[:,-1,:]
-
         y_hat_chord = tf.contrib.layers.fully_connected(final_output, self.hparams.input_size, activation_fn=None)
         y_hat_num_notes = tf.contrib.layers.fully_connected(final_output, 1, activation_fn=None)
 
@@ -48,14 +47,21 @@ class ChordRNN:
     
     def add_loss_op(self):
         chord_loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(labels=self.labels, logits=self.y_hat_chord))
-        num_note_loss = tf.square(tf.subtract(self.y_hat_num_notes, tf.reduce_sum(self.labels)))
-        return tf.add(chord_loss, tf.multiply(self.hparams.num_note_lr, num_note_loss))
+        num_note_loss = tf.reduce_mean(tf.square(tf.subtract(self.y_hat_num_notes, tf.reduce_sum(self.labels, axis=1))))
+        loss = chord_loss + self.hparams.num_note_lr*num_note_loss
+        return loss
     
     def add_train_op(self):
         optimizer = tf.train.AdamOptimizer(self.hparams.lr)
-        gradvs = optimizer.compute_gradients(self.loss)
-        clipped_grads = [(tf.clip_by_norm(grad, 1.), var) for grad, var in gradvs] 
-        train_op = optimizer.apply_gradients(clipped_grads) 
+        # self.gradvs = optimizer.compute_gradients(self.loss)
+        self.gradvs = tf.gradients(self.loss, tf.trainable_variables())
+        grads, _ = tf.clip_by_global_norm(self.gradvs, 50)
+        grads_and_vars = list(zip(grads, tf.trainable_variables()))
+        # self.clipped_grads = [(tf.clip_by_norm(grad, 1.0), var) for grad, var in self.gradvs] 
+        # self.clipped_grads = [(tf.clip_by_average_norm(grad, 1.0), var) for grad, var in self.gradvs] 
+        # self.clipped_grads = [(tf.clip_by_value(grad, -1.0, 1.0), var) for grad, var in self.gradvs] 
+        train_op = optimizer.apply_gradients(grads_and_vars)
+        # train_op = tf.train.AdamOptimizer(self.hparams.lr).minimize(self.loss)
         return train_op
     ## end initialization ##
 
@@ -69,7 +75,8 @@ class ChordRNN:
     def train_batch(self, sess, inputs, labels):
         feed_dict = self.create_feed_dict(inputs=inputs, labels=labels)
         # pdb.set_trace()
-        batch_loss, _ = sess.run([self.loss, self.train_op], feed_dict=feed_dict)
+        batch_loss, grads, _ = sess.run([self.loss, self.clipped_grads, self.train_op], feed_dict=feed_dict)
+        print([np.linalg.norm(grad) for grad in grads])
         tf.summary.scalar('loss',batch_loss)
         return batch_loss
     
@@ -164,17 +171,23 @@ class ChordRNN:
             input = note_sequence[-self.hparams.input_len:]
             input = np.expand_dims(np.vstack(input),axis=0) 
             feed_dict = self.create_feed_dict(inputs=input)
-            newstate_np = sess.run(self.newstate, feed_dict=feed_dict)
+            newstate_np, no_notes = sess.run([self.y_hat_chord, self.y_hat_num_notes], feed_dict=feed_dict)
+            no_notes = int(np.around(no_notes))
 
             # generate next state by sampling from output distribution
             logit = np.squeeze(newstate_np)
-            probs = np.exp(logit)/sum(np.exp(logit)) # computing softmax
-            sampled_state_idx = weighted_pick(probs)
-            sampled_state = np.zeros(self.hparams.input_size)
-            sampled_state[sampled_state_idx] = 1
+            avg = np.mean(logit)
+            probs = np.exp(logit-avg)/np.sum(np.exp(logit-avg)) # computing softmax
+            gen_notes = np.zeros(self.hparams.input_size)
+            if no_notes == 1:
+                gen_notes[np.random.choice(self.hparams.input_size, p=probs)] = 1
+            else:
+                p = probs[:-1]/np.sum(probs[:-1])
+                indices = np.random.choice(self.hparams.input_size-1, size=no_notes, p=p)
+                gen_notes[indices] = 1
 
             # convert, and add state to sequence object
-            note_sequence.add(sampled_state)
+            note_sequence.add(gen_notes)
             # notes_temp = np.vstack((notes[0,:,:], sampled_state))
             # notes = notes_temp.reshape(1,notes_temp.shape[0],notes_temp.shape[1])
 
