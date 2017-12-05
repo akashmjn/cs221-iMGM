@@ -55,7 +55,7 @@ class ChordRNN:
         optimizer = tf.train.AdamOptimizer(self.hparams.lr)
         # self.gradvs = optimizer.compute_gradients(self.loss)
         self.gradvs = tf.gradients(self.loss, tf.trainable_variables())
-        grads, _ = tf.clip_by_global_norm(self.gradvs, 50)
+        grads, _ = tf.clip_by_global_norm(self.gradvs, 1.0)
         grads_and_vars = list(zip(grads, tf.trainable_variables()))
         # self.clipped_grads = [(tf.clip_by_norm(grad, 1.0), var) for grad, var in self.gradvs] 
         # self.clipped_grads = [(tf.clip_by_average_norm(grad, 1.0), var) for grad, var in self.gradvs] 
@@ -75,8 +75,8 @@ class ChordRNN:
     def train_batch(self, sess, inputs, labels):
         feed_dict = self.create_feed_dict(inputs=inputs, labels=labels)
         # pdb.set_trace()
-        batch_loss, grads, _ = sess.run([self.loss, self.clipped_grads, self.train_op], feed_dict=feed_dict)
-        print([np.linalg.norm(grad) for grad in grads])
+        batch_loss, _ = sess.run([self.loss, self.train_op], feed_dict=feed_dict)
+        # print([np.linalg.norm(grad) for grad in grads])
         tf.summary.scalar('loss',batch_loss)
         return batch_loss
     
