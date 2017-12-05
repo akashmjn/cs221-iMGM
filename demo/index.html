@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+
+  <meta charset='utf-8'>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+
+  <!-- LOAD CUSTOM STATIC RESOURCES -->
+  <link rel="shortcut icon" type="image/x-icon" href="images/favicon.ico"/>
+  <link rel="stylesheet" type="text/css" media="screen" href="css/bulma.css"/>
+  <script type="text/javascript" src="https://use.fontawesome.com/c52691aa8d.js"></script>
+  <script src="js/index.js" type="text/javascript"></script>
+  <title>AI Final Project - Stanford University</title>
+</head>
+
+
+<body>
+<style>
+audio {
+  display: block;
+  width: 100%;
+  margin: 5px 0px;
+}
+</style>
+  <section class="hero is-medium is-primary is-bold">
+  <div class="hero-body">
+    <div class="container">
+      <h1 class="title">
+        Music Generation
+      </h1>
+      <h2 class="subtitle">
+        CS 221 Final Project (2017) - Akash Mahajan, Suraj Heereguppe, Nathan Dalal
+      </h2>
+    </div>
+  </div>
+  </section>
+
+  <div style="margin: 50px;"></div>
+
+  <div class="container">
+    <div class="columns is-multiline">
+      <div class="column is-6 is-12-mobile content">
+        <h2>Baseline</h2>
+        <h6>We want to use the MIDI file format to generate good music.</h6>
+        <h6>As a decent baseline, pink noise samples inversely by frequency to create better than random noise.</h6>
+        <audio controls>
+          <source src="audio/pink_noise.mp3" type="audio/mpeg">
+          The file is missing or your browser does not support the audio element.
+        </audio>
+      </div>
+
+      <div class="column is-6 is-12-mobile content">
+        <h2>Markov Models</h2>
+        <h6>We learned note transitions from songs and used transition probabilities to generate notes.</h6>
+        <audio controls>
+          <source src="audio/markov.mp3" type="audio/mpeg">
+          The file is missing or your browser does not support the audio element.
+        </audio>
+        <h6>We also tried incorporating duration into our Markov Models.</h6>
+        <audio controls>
+          <source src="audio/markov_duration.mp3" type="audio/mpeg">
+          The file is missing or your browser does not support the audio element.
+        </audio>
+      </div>
+
+      <div class="column is-6 is-12-mobile content">
+        <h2>Recurrent Neural Networks</h2>
+        <h6>We represented notes as one-hot vectors and let recurrent networks learn trends and get creative!</h6>
+        <audio controls>
+          <source src="audio/rnn_basic.mp3" type="audio/mpeg">
+          The file is missing or your browser does not support the audio element.
+        </audio>
+        <h6>This is a good single-note melody we created by sampling with beam search.</h6>
+        <audio controls>
+          <source src="audio/rnn_beam.mp3" type="audio/mpeg">
+          The file is missing or your browser does not support the audio element.
+        </audio>
+        <h6>Here's a long soothing classical piece to finish it off.</h6>
+        <audio controls>
+          <source src="audio/rnn_classical_long.mp3" type="audio/mpeg">
+          The file is missing or your browser does not support the audio element.
+        </audio>
+      </div>
+
+      <div class="column is-6 is-12-mobile content">
+        <h2>Future Work</h2>
+        <h6>We're working on RNN models with chords as inputs; here's a sneak peek into that.</h6>
+        <audio controls>
+          <source src="audio/rnn_chord.mp3" type="audio/mpeg">
+          The file is missing or your browser does not support the audio element.
+        </audio>
+        <h6>Someday we hope to build something as awesome as this.</h6>
+        <audio controls>
+          <source src="audio/oracle.mp3" type="audio/mpeg">
+          The file is missing or your browser does not support the audio element.
+        </audio>
+      </div>
+
+    </div>
+  </div>
+</body>
+
+</html>
