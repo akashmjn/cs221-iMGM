@@ -202,7 +202,7 @@ class Sequence(object):
 
         @return numpy matrix (len(self) x x (NUM_POSSIBLE_NOTES + 1))
         '''
-        return np.asmatrix(self.sequence)
+        return np.asarray(np.asmatrix(self.sequence))
 
     # def chords_to_midi(self, midi_path, beat_length = 0.5, instrument_name = "Cello", velocity = 100, one_hot = False):
     #     """
