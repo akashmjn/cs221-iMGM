@@ -4,4 +4,6 @@
 data/*
 *.pyc
 *.log
-
+*.mp3
+demo/audio
+models/*

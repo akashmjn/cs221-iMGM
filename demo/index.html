@@ -31,6 +31,12 @@ audio {
       <h2 class="subtitle">
         CS 221 Final Project (2017) - Akash Mahajan, Suraj Heereguppe, Nathan Dalal
       </h2>
+      <a class="button is-medium" href="https://github.com/akashmjn/cs221-iMGM">
+        <span class="icon">
+          <i class="fa fa-github"></i>
+        </span>
+        <span>GitHub</span>
+      </a>
     </div>
   </div>
   </section>
@@ -52,10 +58,6 @@ audio {
       <div class="column is-6 is-12-mobile content">
         <h2>Markov Models</h2>
         <h6>We learned note transitions from songs and used transition probabilities to generate notes.</h6>
-        <audio controls>
-          <source src="audio/markov.mp3" type="audio/mpeg">
-          The file is missing or your browser does not support the audio element.
-        </audio>
         <h6>We also tried incorporating duration into our Markov Models.</h6>
         <audio controls>
           <source src="audio/markov_duration.mp3" type="audio/mpeg">
@@ -70,14 +72,13 @@ audio {
           <source src="audio/rnn_basic.mp3" type="audio/mpeg">
           The file is missing or your browser does not support the audio element.
         </audio>
-        <h6>This is a good single-note melody we created by sampling with beam search.</h6>
+        <h6>Now accounting for duration, here's a few long and soothing Bach-trained pieces.</h6>
         <audio controls>
-          <source src="audio/rnn_beam.mp3" type="audio/mpeg">
+          <source src="audio/rnn_bach_long.mp3" type="audio/mpeg">
           The file is missing or your browser does not support the audio element.
         </audio>
-        <h6>Here's a long soothing classical piece to finish it off.</h6>
         <audio controls>
-          <source src="audio/rnn_classical_long.mp3" type="audio/mpeg">
+          <source src="audio/rnn_bach_longer.mp3" type="audio/mpeg">
           The file is missing or your browser does not support the audio element.
         </audio>
       </div>
@@ -86,7 +87,11 @@ audio {
         <h2>Future Work</h2>
         <h6>We're working on RNN models with chords as inputs; here's a sneak peek into that.</h6>
         <audio controls>
-          <source src="audio/rnn_chord.mp3" type="audio/mpeg">
+          <source src="audio/rnn_chord_basic.mp3" type="audio/mpeg">
+          The file is missing or your browser does not support the audio element.
+        </audio>
+        <audio controls>
+          <source src="audio/rnn_chord_better.mp3" type="audio/mpeg">
           The file is missing or your browser does not support the audio element.
         </audio>
         <h6>Someday we hope to build something as awesome as this.</h6>
