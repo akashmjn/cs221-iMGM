@@ -159,11 +159,10 @@ class RNNMusic:
         """
         Returns a PDF over possible states, conditioned on the sequence so far
         """
-        input,labels = self._batchify(note_sequence)
-        # input = note_sequence[-self.hparams.input_len:]
-        # input = np.expand_dims(np.vstack(input),axis=0) 
-        # input = note_sequence.sequence
-        # input = np.expand_dims(np.vstack(input),axis=1) 
+        # input,labels = self._batchify(note_sequence)
+        # passing the entire sequence of notes (upto now) for dynamic_rnn to unroll
+        input = np.vstack(note_sequence.sequence) 
+        input = np.expand_dims(input,axis=1)
         feed_dict = self.create_feed_dict(inputs=input)
         output_np = sess.run(self.output, feed_dict=feed_dict)       
         output_np = np.squeeze(output_np[-1,:]) # original size (len(sequence),input_size)
@@ -203,6 +202,7 @@ class RNNMusic:
         """
         score,sequence,state = beam_entry
         probs = self.get_next_output(sess,sequence,return_probs=True)
+        # sample a fixed number of states 
         # for each option, push to fixed size heap
         for i in range(len(probs)):
             new_score = score + np.log(probs[i])
@@ -258,21 +258,22 @@ class RNNMusic:
         note_sequence = Sequence(epsilon=self.hparams.epsilon)
         for i in range(self.hparams.input_len):
             row = np.zeros(self.hparams.input_size)
-            row[np.random.randint(60,72)] = 1
+            # row[np.random.randint(60,72)] = 1
+            row[60] = 1
             note_sequence.add(row)
 
-        # # ## Random sampling
-        # self.sample_sequence(sess,note_sequence,num_notes,argmax=False)
-        # # return sequence object / write to file 
-        # note_sequence.many_hot_to_midi(save_midi_path)
+        # ## Random sampling
+        self.sample_sequence(sess,note_sequence,num_notes,argmax=False)
+        # return sequence object / write to file 
+        note_sequence.many_hot_to_midi(save_midi_path)
 
-        # Beam search implementation
-        result = self.beam_search_sequence(sess,note_sequence,num_notes,2)
-        score,sequence,state = result
-        print("Beam searched sequence of length {} with log likelihood {}".format(
-            len(sequence), score
-        ))
-        sequence.many_hot_to_midi(save_midi_path)
+        # # Beam search implementation
+        # result = self.beam_search_sequence(sess,note_sequence,num_notes,2)
+        # score,sequence,state = result
+        # print("Beam searched sequence of length {} with log likelihood {}".format(
+        #     len(sequence), score
+        # ))
+        # sequence.many_hot_to_midi(save_midi_path)
 
         # matrix_to_midi(notes.reshape(notes.shape[1],notes.shape[2]), save_midi_path)
 
