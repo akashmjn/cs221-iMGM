@@ -11,7 +11,7 @@ import tensorflow as tf
 from collections import defaultdict
 from tensorflow.contrib.training import HParams
 from collections import namedtuple
-from basic_rnn_akash import RNNMusic
+from src.sequence_rnn import RNNMusic
 from chord_rnn import ChordRNN
 
 def testMonteCarlo(inpath,outpath,order=1):
@@ -92,7 +92,7 @@ def collectMIDIFiles(source_path,dest_path,suffix):
 
 def testRNNTrain(input_path,model_path,hparams):
     
-    rnn_music = ChordRNN(hparams)
+    rnn_music = RNNMusic(hparams)
     graph = rnn_music.build_graph()
     with graph.as_default():
         init = tf.global_variables_initializer()
@@ -109,7 +109,7 @@ def testRNNTrain(input_path,model_path,hparams):
 
 def testRNNGenerate(model_path,output_path,hparams):
     
-    rnn_music = ChordRNN(hparams)
+    rnn_music = RNNMusic(hparams)
     graph = rnn_music.build_graph()   
     with graph.as_default():
         saver = tf.train.Saver()
