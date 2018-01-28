@@ -5,9 +5,8 @@ We are working on music generation and chord generation from large open MIDI dat
 ### Description
 
 See our write-ups for more information.
-- [Project Proposal](reports/proposal.pdf)
-- [Project Progress](reports/progress.pdf)
 - [Poster](reports/poster.pdf)
+- [Project Report](reports/final.pdf)
 
 ### Contributors
 - Akash Mahajan - Masters, Management Science and Engineering
